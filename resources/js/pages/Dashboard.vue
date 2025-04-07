@@ -26,6 +26,12 @@ import {
 } from 'lucide-vue-next';
 import Chart from 'chart.js/auto';
 
+// Accept props from the controller
+const props = defineProps({
+  chartData: Object,
+  availableYears: Array,
+});
+
 const showAddDialog = ref(false);
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -35,23 +41,32 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-
-
 // State
 const yearFilter = ref(new Date().getFullYear());
-const availableYears = ref([2023, 2024, 2025]);
+const availableYears = ref([]);
+
+onMounted(() => {
+  if (props.availableYears) {
+    availableYears.value = props.availableYears;
+  }
+});
+
 
 // Chart references
 const healthCardChart = ref(null);
 const categoryChart = ref(null);
 const sanitaryChart = ref(null);
 const statusChart = ref(null);
+const barangayChart = ref(null);
+const rhuHealthCardChart = ref(null);
 
 // Chart instances
 let healthCardChartInstance = null;
 let categoryChartInstance = null;
 let sanitaryChartInstance = null;
 let statusChartInstance = null;
+let barangayChartInstance = null;
+let rhuHealthCardChartInstance = null;
 
 // Summary data
 const summaryData = reactive({
@@ -65,7 +80,7 @@ const summaryData = reactive({
   renewalGrowth: 0
 });
 
-// Chart data
+// Chart data - now using props from controller
 const chartData = reactive({
   healthCards: {
     labels: [],
@@ -82,115 +97,133 @@ const chartData = reactive({
   status: {
     labels: [],
     datasets: []
+  },
+  barangay: {
+    labels: [],
+    datasets: []
+  },
+  rhuHealthCard: {
+    labels: [],
+    datasets: []
   }
 });
 
-// Generate random data for charts
-const generateRandomData = (year) => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
-  // Health Cards per month
-  const healthCardData = months.map(() => Math.floor(Math.random() * 100) + 50);
-  
-  // Categories
-  const foodCount = Math.floor(Math.random() * 500) + 300;
-  const nonFoodCount = Math.floor(Math.random() * 400) + 200;
-  const otherCount = Math.floor(Math.random() * 200) + 100;
-  
-  // Sanitary permits
-  const newPermits = months.map(() => Math.floor(Math.random() * 40) + 20);
-  const renewals = months.map(() => Math.floor(Math.random() * 60) + 30);
-  
-  // Status distribution
-  const activeCount = Math.floor(Math.random() * 600) + 400;
-  const expiredCount = Math.floor(Math.random() * 200) + 50;
-  const pendingCount = Math.floor(Math.random() * 150) + 30;
-  
-  // Update summary data
-  summaryData.totalHealthCards = healthCardData.reduce((sum, val) => sum + val, 0);
-  summaryData.healthCardGrowth = Math.floor(Math.random() * 20) - 5; // -5% to +15%
-  
-  summaryData.activePermits = activeCount;
-  summaryData.permitGrowth = Math.floor(Math.random() * 15) - 3; // -3% to +12%
-  
-  summaryData.newApplications = newPermits.reduce((sum, val) => sum + val, 0);
-  summaryData.applicationGrowth = Math.floor(Math.random() * 25) - 8; // -8% to +17%
-  
-  summaryData.pendingRenewals = pendingCount;
-  summaryData.renewalGrowth = Math.floor(Math.random() * 18) - 6; // -6% to +12%
-  
-  // Update chart data
-  chartData.healthCards = {
-    labels: months,
-    datasets: [{
-      label: 'Health Cards Issued',
-      data: healthCardData,
-      backgroundColor: 'rgba(59, 130, 246, 0.5)',
-      borderColor: 'rgb(59, 130, 246)',
-      borderWidth: 2,
-      tension: 0.3,
-      fill: true
-    }]
+// Initialize chart data from props
+// const initializeChartData = () => {
+//   if (!props.chartData) return;
+
+//   // Update barangay chart data
+//   if (props.chartData.barangay) {
+//     chartData.barangay = {
+//       labels: props.chartData.barangay.labels,
+//       datasets: [{
+//         label: 'Health Cards Issued',
+//         data: props.chartData.barangay.data,
+//         backgroundColor: 'rgba(79, 70, 229, 0.7)', // Indigo color
+//         borderColor: 'rgb(79, 70, 229)',
+//         borderWidth: 1
+//       }]
+//     };
+//   }
+
+const initializeChartData = () => {
+  if (!props.chartData) return;
+
+  // Generate dynamic colors for many barangays
+  const generateColors = (count) => {
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+      const hue = Math.floor((360 / count) * i); // evenly distributed hues
+      colors.push(`hsl(${hue}, 70%, 60%)`);
+    }
+    return colors;
   };
-  
-  chartData.categories = {
-    labels: ['Food', 'Non-Food', 'Other'],
-    datasets: [{
-      label: 'Health Cards by Category',
-      data: [foodCount, nonFoodCount, otherCount],
-      backgroundColor: [
-        'rgba(16, 185, 129, 0.7)',
-        'rgba(99, 102, 241, 0.7)',
-        'rgba(245, 158, 11, 0.7)'
-      ],
-      borderColor: [
-        'rgb(16, 185, 129)',
-        'rgb(99, 102, 241)',
-        'rgb(245, 158, 11)'
-      ],
-      borderWidth: 1
-    }]
-  };
-  
-  chartData.sanitary = {
-    labels: months,
-    datasets: [
-      {
-        label: 'New Permits',
-        data: newPermits,
-        backgroundColor: 'rgba(16, 185, 129, 0.5)',
-        borderColor: 'rgb(16, 185, 129)',
-        borderWidth: 2
-      },
-      {
-        label: 'Renewals',
-        data: renewals,
-        backgroundColor: 'rgba(245, 158, 11, 0.5)',
-        borderColor: 'rgb(245, 158, 11)',
-        borderWidth: 2
-      }
-    ]
-  };
-  
-  chartData.status = {
-    labels: ['Active', 'Expired', 'Pending'],
-    datasets: [{
-      label: 'Application Status',
-      data: [activeCount, expiredCount, pendingCount],
-      backgroundColor: [
-        'rgba(16, 185, 129, 0.7)',
-        'rgba(239, 68, 68, 0.7)',
-        'rgba(245, 158, 11, 0.7)'
-      ],
-      borderColor: [
-        'rgb(16, 185, 129)',
-        'rgb(239, 68, 68)',
-        'rgb(245, 158, 11)'
-      ],
-      borderWidth: 1,
-      hoverOffset: 4
-    }]
-  };
+
+  // Update barangay chart data
+  if (props.chartData.barangay) {
+    const labels = props.chartData.barangay.labels;
+    const data = props.chartData.barangay.data;
+    const backgroundColors = generateColors(labels.length);
+
+    chartData.barangay = {
+      labels,
+      datasets: [{
+        label: 'Health Cards Issued',
+        data,
+        backgroundColor: backgroundColors,
+        borderColor: backgroundColors,
+        borderWidth: 1
+      }]
+    };
+  }
+
+
+  // Update RHU health card data
+  if (props.chartData.rhuHealthCard) {
+    chartData.rhuHealthCard = {
+      labels: props.chartData.rhuHealthCard.labels,
+      datasets: [{
+        label: 'Health Cards Issued',
+        data: props.chartData.rhuHealthCard.data,
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.7)', // Green
+          'rgba(59, 130, 246, 0.7)', // Blue
+          'rgba(245, 158, 11, 0.7)', // Amber
+          'rgba(139, 92, 246, 0.7)'  // Purple
+        ],
+        borderColor: [
+          'rgb(16, 185, 129)',
+          'rgb(59, 130, 246)',
+          'rgb(245, 158, 11)',
+          'rgb(139, 92, 246)'
+        ],
+        borderWidth: 1
+      }]
+    };
+  }
+
+  // Update monthly health card data
+  if (props.chartData.healthCards) {
+    chartData.healthCards = {
+      labels: props.chartData.healthCards.labels,
+      datasets: [{
+        label: 'Health Cards Issued',
+        data: props.chartData.healthCards.data,
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: 'rgb(59, 130, 246)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    };
+  }
+
+  // Update categories data
+  if (props.chartData.categories) {
+    chartData.categories = {
+      labels: props.chartData.categories.labels,
+      datasets: [{
+        label: 'Health Cards by Category',
+        data: props.chartData.categories.data,
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.7)',
+          'rgba(99, 102, 241, 0.7)',
+          'rgba(245, 158, 11, 0.7)'
+        ],
+        borderColor: [
+          'rgb(16, 185, 129)',
+          'rgb(99, 102, 241)',
+          'rgb(245, 158, 11)'
+        ],
+        borderWidth: 1
+      }]
+    };
+  }
+
+  // Calculate total health cards for summary
+  if (props.chartData.healthCards && props.chartData.healthCards.data) {
+    summaryData.totalHealthCards = props.chartData.healthCards.data.reduce((sum, val) => sum + Number(val), 0);
+  }
 };
 
 // Initialize charts
@@ -247,7 +280,7 @@ const initCharts = () => {
             label: function(context) {
               const label = context.label || '';
               const value = context.raw || 0;
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const total = context.dataset.data.reduce((a, b) => a + Number(b), 0);
               const percentage = Math.round((value / total) * 100);
               return `${label}: ${value} (${percentage}%)`;
             }
@@ -257,14 +290,32 @@ const initCharts = () => {
     }
   });
   
-  // Sanitary Chart
+  // Sanitary Chart - keeping this for now, but it's not connected to backend data
   if (sanitaryChartInstance) {
     sanitaryChartInstance.destroy();
   }
   
   sanitaryChartInstance = new Chart(sanitaryChart.value, {
     type: 'bar',
-    data: chartData.sanitary,
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [
+        {
+          label: 'New Permits',
+          data: [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80],
+          backgroundColor: 'rgba(16, 185, 129, 0.5)',
+          borderColor: 'rgb(16, 185, 129)',
+          borderWidth: 2
+        },
+        {
+          label: 'Renewals',
+          data: [35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90],
+          backgroundColor: 'rgba(245, 158, 11, 0.5)',
+          borderColor: 'rgb(245, 158, 11)',
+          borderWidth: 2
+        }
+      ]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -289,14 +340,32 @@ const initCharts = () => {
     }
   });
   
-  // Status Chart
+  // Status Chart - keeping this for now, but it's not connected to backend data
   if (statusChartInstance) {
     statusChartInstance.destroy();
   }
   
   statusChartInstance = new Chart(statusChart.value, {
     type: 'pie',
-    data: chartData.status,
+    data: {
+      labels: ['Active', 'Expired', 'Pending'],
+      datasets: [{
+        label: 'Application Status',
+        data: [450, 100, 50],
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.7)',
+          'rgba(239, 68, 68, 0.7)',
+          'rgba(245, 158, 11, 0.7)'
+        ],
+        borderColor: [
+          'rgb(16, 185, 129)',
+          'rgb(239, 68, 68)',
+          'rgb(245, 158, 11)'
+        ],
+        borderWidth: 1,
+        hoverOffset: 4
+      }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -309,7 +378,7 @@ const initCharts = () => {
             label: function(context) {
               const label = context.label || '';
               const value = context.raw || 0;
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const total = context.dataset.data.reduce((a, b) => a + Number(b), 0);
               const percentage = Math.round((value / total) * 100);
               return `${label}: ${value} (${percentage}%)`;
             }
@@ -318,23 +387,100 @@ const initCharts = () => {
       }
     }
   });
+
+  // Barangay Chart
+  if (barangayChartInstance) {
+    barangayChartInstance.destroy();
+  }
+
+  barangayChartInstance = new Chart(barangayChart.value, {
+    type: 'bar',
+    data: chartData.barangay,
+    options: {
+      indexAxis: 'y', // Horizontal bar chart for better display of many barangays
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false, // Hide legend for this chart
+        },
+        title: {
+          display: false,
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Health Cards'
+          }
+        },
+        y: {
+          title: {
+            display: false,
+          }
+        }
+      }
+    }
+  });
+
+  // RHU Health Card Chart
+  if (rhuHealthCardChartInstance) {
+    rhuHealthCardChartInstance.destroy();
+  }
+
+  rhuHealthCardChartInstance = new Chart(rhuHealthCardChart.value, {
+    type: 'bar',
+    data: chartData.rhuHealthCard,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.dataset.label || '';
+              const value = context.raw || 0;
+              return `${label}: ${value}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Health Cards'
+          }
+        }
+      }
+    }
+  });
 };
 
-// Refresh data
+// Refresh data - now just reinitializes charts with existing data
 const refreshData = () => {
-  generateRandomData(yearFilter.value);
   initCharts();
 };
-
-// Watch for year changes
-watch(yearFilter, () => {
-  refreshData();
-});
 
 // Initialize on mount
 onMounted(() => {
-  generateRandomData(yearFilter.value);
+  initializeChartData();
   initCharts();
+  
+  // Set some default values for summary data that's not from the backend
+  summaryData.healthCardGrowth = 5;
+  summaryData.activePermits = 450;
+  summaryData.permitGrowth = 3;
+  summaryData.newApplications = 120;
+  summaryData.applicationGrowth = 7;
+  summaryData.pendingRenewals = 50;
+  summaryData.renewalGrowth = 2;
 });
 </script>
 
@@ -342,9 +488,9 @@ onMounted(() => {
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-      <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-          <div class="container mx-auto py-10">
-    <div class="w-full bg-white rounded-lg shadow-md p-6">
+      <div class="flex h-full flex-1 flex-col gap-4 rounded-xl">
+          <div class="w-full py-10">
+    <div class="w-full bg-white rounded-lg shadow-md p-4 md:p-6">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 class="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
@@ -458,16 +604,36 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Barangay Chart (Full Width) -->
+      <div class="mb-8">
+        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Health Cards Issued Per Barangay</h3>
+          <div class="h-[600px]"> <!-- Taller height for the 45 barangays -->
+            <canvas ref="barangayChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- RHU Health Card Chart (Full Width) -->
+      <div class="mb-8">
+        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Health Cards Issued Per RHU</h3>
+          <div class="h-80">
+            <canvas ref="rhuHealthCardChart"></canvas>
+          </div>
+        </div>
+      </div>
+
       <!-- Charts Row 1 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Health Cards Issued Per Month</h3>
           <div class="h-80">
             <canvas ref="healthCardChart"></canvas>
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Health Cards by Category</h3>
           <div class="h-80">
             <canvas ref="categoryChart"></canvas>
@@ -477,14 +643,14 @@ onMounted(() => {
 
       <!-- Charts Row 2 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Sanitary Permits - New vs Renewals</h3>
           <div class="h-80">
             <canvas ref="sanitaryChart"></canvas>
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Application Status Distribution</h3>
           <div class="h-80">
             <canvas ref="statusChart"></canvas>
@@ -499,3 +665,4 @@ onMounted(() => {
       
     </AppLayout>
 </template>
+

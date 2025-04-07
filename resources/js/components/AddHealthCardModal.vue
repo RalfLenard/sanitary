@@ -62,6 +62,20 @@
             <input id="barangay" v-model="form.barangay" type="text" placeholder="Enter Barangay"
               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           </div>
+
+          <div>
+              <label for="rhu" class="block text-sm font-medium text-gray-700">RHU</label>
+              <select id="rhu" v-model="form.rhu" 
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="">Select RHU</option>
+                <option value="RHU-I">RHU-I</option>
+                <option value="RHU-II">RHU-II</option>
+                <option value="RHU-III">RHU-III</option>
+                <option value="RHU-IV">RHU-IV</option>
+                <option value="RHU-V">RHU-V</option>
+                <option value="RHU-VI">RHU-VI</option>
+              </select>
+            </div>
           <div>
             <label for="inspector" class="block text-sm font-medium text-gray-700">Inspector Name</label>
             <input id="inspector" v-model="form.inspector_name" type="text" placeholder="Enter Inspector Name"
@@ -108,6 +122,7 @@ const form = useForm({
   barangay: "",
   inspector_name: "",
   date_of_issuance: "",
+  rhu: "rhu-i",
 });
 
 const submit = () => {

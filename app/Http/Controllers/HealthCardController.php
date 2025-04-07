@@ -32,7 +32,8 @@ class HealthCardController extends Controller
             'print_code',
             'inspector_name',
             'barangay',
-            'created_at'
+            'created_at',
+            'rhu'
         )
             ->when($search, function ($query, $search) {
                 $query->where('full_name', 'like', "%{$search}%")
@@ -95,6 +96,7 @@ private function getSortDirection($sort)
             'date_of_issuance' => 'required|date',
             'barangay' => 'nullable|max:255',
             'inspector_name' => 'nullable|max:255',
+            'rhu' => 'nullable|max:255',
 
         ]);
 
@@ -126,6 +128,7 @@ private function getSortDirection($sort)
             'print_code' => $printCode,
             'barangay' => $request->barangay,
             'inspector_name' => $request->inspector_name,
+            'rhu' => $request->rhu,
         ]);
 
         return redirect()->back()->with('success', 'Health card added successfully');
@@ -143,6 +146,7 @@ private function getSortDirection($sort)
             'date_of_issuance' => 'required|date',
             'barangay' => 'nullable|max:255',
             'inspector_name' => 'nullable|max:255',
+            'rhu' => 'nullable|max:255',
         ]);
 
         $issuanceDate = Carbon::parse($request->date_of_issuance);
@@ -170,6 +174,7 @@ private function getSortDirection($sort)
                 'date_of_expiration' => $expirationDate, // ✅ Now updating expiration date
                 'barangay' => $request->barangay,
                 'inspector_name' => $request->inspector_name,
+                'rhu' => $request->rhu,
             ]);
 
             session()->flash('success', 'Health Card updated successfully');

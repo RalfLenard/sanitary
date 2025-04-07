@@ -23,7 +23,8 @@ class HealthCard extends Model
         'date_of_expiration',
         'barangay',
         'inspector_name',
-        'print_code'
+        'print_code',
+        'rhu'
     ];
 
     protected $casts = [

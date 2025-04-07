@@ -12,14 +12,30 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
 
 class DeathController extends Controller
-{public function death(Request $request)
-    {
-        $deaths = Death::latest()->get(); // or use pagination: ->paginate(10)
-    
-        return Inertia::render('Death', [
-            'deaths' => $deaths
-        ]);
+{
+    public function death(Request $request)
+{
+    $query = Death::latest();
+
+    // Check if there is a search query
+    if ($request->has('search') && $request->search) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            // Search by full name (first_name, middle_name, and last_name combined)
+            $q->whereRaw('CONCAT(first_name, " ", middle_name, " ", last_name) LIKE ?', ['%' . $search . '%']);
+        });
     }
+
+    // Paginate results
+    $deaths = $query->paginate(5); // 5 per page, adjust as needed
+
+    return Inertia::render('Death', [
+        'deaths' => $deaths,
+        'search' => $request->search, // Return the search query for Vue component
+    ]);
+}
+
+    
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -69,29 +85,29 @@ class DeathController extends Controller
     {
         // If you need to fetch multiple death records, you can pass a list of IDs
         $selectedIds = explode(',', $id);  // In case you pass multiple IDs as a comma-separated string
-    
+
         // Fetch death records based on selected IDs
         $deaths = Death::whereIn('id', $selectedIds)->get();
-    
+
         // Define PDF Path
         $pdfPath = storage_path('app/public/death_records.pdf');
-    
+
         // Generate PDF using Browsershot (Legal size: 8.5x13 inches)
         $html = view('printDeath', compact('deaths'))->render();
-    
+
         Browsershot::html($html)
             ->ignoreHttpsErrors()
             ->format('LEGAL') // Set correct dimensions
             ->showBackground()
             ->savePdf($pdfPath);
-    
+
         // Return PDF inline
         return response()->file($pdfPath, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="death_records.pdf"',
         ]);
     }
-    
+
 
     public function update(Request $request, Death $death)
     {
@@ -131,22 +147,26 @@ class DeathController extends Controller
             'name_of_mother' => 'nullable|string',
             'gender' => 'nullable|string',
         ]);
-    
+
         // Update the death record
         $death->update($validatedData);
-    
+
         // Redirect back with a success message
         return redirect()->back()->with('success', 'Death record updated successfully');
     }
 
     public function delete($id)
     {
+        // Find the death record by ID or fail if not found
         $death = Death::findOrFail($id);
+
+        // Delete the record
         $death->delete();
 
-        return response()->json(['message' => 'Death record deleted successfully']);
+        // Return a JSON response and redirect back
+        return redirect()->back()->with('success', 'Death record deleted successfully');
     }
 
 
-    
+
 }

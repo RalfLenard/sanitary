@@ -24,6 +24,7 @@ return new class extends Migration
             $table->date('date_of_expiration')->nullable();
             $table->string('barangay')->nullable();
             $table->string('inspector_name')->nullable();
+            $table->string('rhu')->nullable();
             $table->boolean('confirmed')->default(false);
             // $table->unsignedBigInteger('last_updated_by')->nullable();
             $table->timestamps();
