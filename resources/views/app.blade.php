@@ -19,10 +19,13 @@
             })();
 
             window.Laravel = {!! json_encode([
-                'routes' => [
-                    'sanitary_print' => route('sanitary.print', ['id' => '__ID__']),
-                ],
-            ]) !!};
+        'routes' => [
+            'sanitary_print' => route('sanitary.print', ['id' => '__ID__']),
+            'generate_pdf' => route('generate_pdf'), // Merge the generate_pdf route here
+            'death_generate_pdf' => route('death_generate_pdf', ['id' => '__ID__']), 
+        ],
+    ]) !!};
+            
         </script>
 
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
@@ -50,5 +53,7 @@
     </head>
     <body class="font-sans antialiased">
         @inertia
+       
     </body>
+   
 </html>

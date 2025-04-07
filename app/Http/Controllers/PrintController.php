@@ -1,12 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-use Spatie\Browsershot\Browsershot;
-use Illuminate\Http\Request;
+
+use Spatie\LaravelPdf\Facades\Pdf;
 use App\Models\Sanitary;
 use App\Models\PrintCode;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class PrintController extends Controller
@@ -40,35 +39,25 @@ class PrintController extends Controller
                 $sequence = $lastPermit ? $lastPermit->sequence + 1 : 1;
                 $formattedSequence = str_pad($sequence, 4, '0', STR_PAD_LEFT);
                 $permitCode = "SP-{$formattedSequence}";
-    
+
                 // ✅ Save the permit code in the PrintCode table
                 $newPermit = PrintCode::create([
                     'permit_code' => $permitCode,
                     'year' => $currentYear,
                     'sequence' => $sequence
                 ]);
-    
+
                 // ✅ Link the new permit code to the sanitary inspection
                 $inspection->permit_code = $newPermit->permit_code;
                 $inspection->save();
             }
         }
     
-        // Generate the HTML from the Blade view
-        $html = view('print', compact('inspection', 'today', 'lastDayOfYear', 'permitCode'))->render();
+        // Generate the PDF from the Blade view
+        // Using loadView() to load the Blade view and passing paper size via options
+        $pdf = Pdf::view('print', compact('inspection', 'today', 'lastDayOfYear', 'permitCode'));
     
-        // Generate PDF as binary content
-        $pdfContent = Browsershot::html($html)
-        ->setChromePath('C:\Program Files\Google\Chrome\Application\chrome.exe')
-        ->noSandbox()
-        ->format('A4')
-        ->pdf();
-    
-        // Return response to display in a new tab
-        return response($pdfContent, 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="sanitary-inspection.pdf"');
+        // Return the PDF as inline (displayed in browser)
+        return $pdf->inline('sanitary-inspection.pdf');
     }
-    
-
 }

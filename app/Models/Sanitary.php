@@ -12,7 +12,7 @@ class Sanitary extends Model
 
     protected $fillable = [
         'name_of_establishment', 'name_of_owner', 'contact_number', 'barangay',
-        'line_of_business', 'renewal_year', 'permit_code', 'status', 'confirmed', 'last_updated_by', 'inspector_name'
+        'line_of_business', 'renewal_year', 'permit_code', 'status', 'confirmed', 'last_updated_by', 'inspector_name', 'has_signature', 'quarter'
     ];
 
     protected $casts = [

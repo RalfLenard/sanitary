@@ -43,6 +43,21 @@
                         <label class="text-sm font-medium">Renewal Year</label>
                         <input v-model="form.renewal_year" type="number" class="input-field" />
                     </div>
+
+                    <!-- Include Signature Toggle -->
+                    <div class="flex items-center space-x-3">
+                        <label class="text-sm font-medium">Include Signature</label>
+                        <button
+                            @click.prevent="form.has_signature = !form.has_signature"
+                            class="relative w-12 h-6 flex items-center rounded-full bg-gray-300 transition-all"
+                            :class="{ 'bg-blue-500': form.has_signature }"
+                        >
+                            <div
+                                class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all"
+                                :class="{ 'translate-x-6': form.has_signature }"
+                            ></div>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Footer Buttons -->
@@ -76,6 +91,7 @@ const form = useForm({
     line_of_business: props.permit?.line_of_business || "",
     inspector_name: props.permit?.inspector_name || "",
     renewal_year: props.permit?.renewal_year || new Date().getFullYear(),
+    has_signature: props.permit?.has_signature || false, // ✅ Added has_signature field
 });
 
 // Watch for permit prop changes and update the form
@@ -90,6 +106,7 @@ watch(() => props.permit, (newPermit) => {
         form.line_of_business = newPermit.line_of_business;
         form.inspector_name = newPermit.inspector_name;
         form.renewal_year = newPermit.renewal_year;
+        form.has_signature = newPermit.has_signature; // ✅ Ensures has_signature updates
     }
 }, { deep: true });
 

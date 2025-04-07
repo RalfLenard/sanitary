@@ -15,39 +15,52 @@
             <div class="grid gap-2">
               <label class="text-sm font-medium">Business Name</label>
               <input v-model="form.name_of_establishment" class="input-field" />
-           
             </div>
             <div class="grid gap-2">
               <label class="text-sm font-medium">Owner Name</label>
               <input v-model="form.name_of_owner" class="input-field" />
-              
             </div>
           </div>
           <div class="grid gap-2">
             <label class="text-sm font-medium">Barangay</label>
             <input v-model="form.barangay" class="input-field" />
-         
           </div>
           <div class="grid gap-2">
             <label class="text-sm font-medium">Contact Number</label>
             <input v-model="form.contact_number" class="input-field" />
-         
           </div>
           <div class="grid gap-2">
             <label class="text-sm font-medium">Line of Business</label>
             <input v-model="form.line_of_business" class="input-field" />
-           
           </div>
           <div class="grid gap-2">
             <label class="text-sm font-medium">Inspector</label>
             <input v-model="form.inspector_name" class="input-field" />
-          
           </div>
           <div class="grid gap-2">
             <label class="text-sm font-medium">Renewal Year</label>
             <input v-model="form.renewal_year" type="number" class="input-field" />
-           
           </div>
+
+          <!-- ✅ Fixed Has Signature Toggle -->
+          <div class="flex items-center space-x-3">
+            <label class="text-sm font-medium">Include Signature</label>
+            <button
+              type="button"
+              @click="toggleSignature"
+              class="relative w-12 h-6 flex items-center rounded-full transition-all"
+              :class="form.has_signature ? 'bg-blue-500' : 'bg-gray-300'"
+            >
+              <div
+                class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all"
+                :class="form.has_signature ? 'translate-x-6' : 'translate-x-0'"
+              ></div>
+            </button>
+          </div>
+
+          <!-- ✅ Debugging Output (Check Value in UI) -->
+          <p class="text-xs text-gray-500">Signature Status: <strong>{{ form.has_signature }}</strong></p>
+
         </div>
 
         <!-- Footer Buttons -->
@@ -67,27 +80,37 @@ import { defineProps, defineEmits } from "vue";
 defineProps({ show: Boolean });
 const emit = defineEmits(["close"]);
 
-// ✅ Ensure `name_of_establishment` is included
+// ✅ Form Initialization
 const form = useForm({
-  name_of_establishment: "", // Added this missing field
+  name_of_establishment: "",
   name_of_owner: "",
   barangay: "",
   contact_number: "",
   line_of_business: "",
   inspector_name: "",
-  renewal_year: new Date().getFullYear(), // Default to current year
+  renewal_year: new Date().getFullYear(),
+  has_signature: false, // ✅ Default is false
 });
 
-const submit = () => {
-  console.log("Submitting form:", form); // Debugging
-  form.post(route("newPermit"), {
-    onSuccess: () => {
-      emit("close"); // Close modal after successful submission
-    },
-  });
+// ✅ Toggle Signature Function
+const toggleSignature = () => {
+  form.has_signature = !form.has_signature;
+  console.log("Signature Toggled:", form.has_signature); // ✅ Debugging Output
 };
-</script>
 
+// ✅ Submit Form
+const submit = () => {
+    console.log("Submitting form:", JSON.stringify(form));
+
+    form.post(route("newPermit"), {
+        onSuccess: () => {
+            emit("close");
+            window.location.reload(); // ✅ Auto-refresh the page
+        },
+    });
+};
+
+</script>
 
 <style scoped>
 .input-field {
@@ -101,8 +124,5 @@ const submit = () => {
 }
 .exit-btn {
   @apply text-2xl text-gray-500 hover:text-gray-700 cursor-pointer;
-}
-.error-text {
-  @apply text-sm text-red-500;
 }
 </style>

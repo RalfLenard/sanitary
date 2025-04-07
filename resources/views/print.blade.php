@@ -256,12 +256,19 @@
                 <p>benjamin q. bengco iii, md</p>
                 
                 @if(Str::lower($inspection->inspector_name) === 'aaron jay c. gonzales')
-                    <img class="sir-a" src="{{ asset('images/A-sig.png') }}" alt="Signature">
+                    <img class="sir-a" src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/A-sig.png'))) }}" alt="Signature">
                 @else
-                    <img class="sir-g" src="{{ asset('images/sir-g.png') }}" alt="Signature">
+                    <img class="sir-g" src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/sir-g.png'))) }}" alt="Sir G">
                 @endif
 
-                <img class="sir-doc" src="{{ asset('images/DOC-B.png') }}" alt="Signature">
+
+                @if($inspection->has_signature)
+                    <img class="sir-doc" 
+                        src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/DOC-B.png'))) }}" 
+                        alt="DOC B">
+                @endif
+
+
             </div>
         </div>
     </div>

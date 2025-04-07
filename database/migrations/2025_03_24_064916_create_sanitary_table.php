@@ -24,8 +24,10 @@ return new class extends Migration
             $table->timestamp('renewed_at')->useCurrent();
             $table->enum('status', ['New', 'Renewed', 'Close', 'Inspected', 'Completed'])->default('New');
             $table->boolean('confirmed')->default(false);
+            $table->integer('quarter')->default(1);
             $table->unsignedBigInteger('last_updated_by')->nullable();
             $table->foreign('last_updated_by')->references('id')->on('users')->onDelete('set null');
+            $table->boolean('has_signature')->default(false);
             $table->timestamps();
         });
     }
