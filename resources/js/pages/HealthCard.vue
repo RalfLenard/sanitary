@@ -1,8 +1,7 @@
 <template>
-
     <Head title="Health Card" />
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl ">
             <div class="w-full bg-white rounded-lg shadow-md">
                 <div class="flex flex-col p-6 border-b gap-4">
                     <div class="flex flex-row items-center justify-between">
@@ -59,170 +58,162 @@
                             </select>
                         </div>
                     </div>
-
                 </div>
 
                 <div class="p-6">
                     <div class="rounded-md border">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col"
-                                        class="w-[50px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <input type="checkbox" ref="selectAllCheckbox" :checked="allSelected"
-                                            @change="toggleSelectAll"
-                                            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                                            aria-label="Select all cards" />
-                                    </th>
+                        <!-- Added overflow container -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col"
+                                            class="w-[50px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <input type="checkbox" ref="selectAllCheckbox" :checked="allSelected"
+                                                @change="toggleSelectAll"
+                                                class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                                aria-label="Select all cards" />
+                                        </th>
 
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                        @click="setSorting('serialCode')">
-                                        <div class="flex items-center">
-                                            Serial Code
-                                            <ArrowUpDown class="ml-1 h-4 w-4" />
-                                        </div>
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                        @click="setSorting('full_name')">
-                                        <div class="flex items-center">
-                                            Full Name
-                                            <ArrowUpDown class="ml-1 h-4 w-4" />
-                                        </div>
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Age
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Gender
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Place of Employment
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Designation
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                        @click="setSorting('issueDate')">
-                                        <div class="flex items-center">
-                                            Issue Date
-                                            <ArrowUpDown class="ml-1 h-4 w-4" />
-                                        </div>
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                        @click="setSorting('expiryDate')">
-                                        <div class="flex items-center">
-                                            Expiry Date
-                                            <ArrowUpDown class="ml-1 h-4 w-4" />
-                                        </div>
-                                    </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                            @click="setSorting('serialCode')">
+                                            <div class="flex items-center">
+                                                Serial Code
+                                                <ArrowUpDown class="ml-1 h-4 w-4" />
+                                            </div>
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                            @click="setSorting('full_name')">
+                                            <div class="flex items-center">
+                                                Full Name
+                                                <ArrowUpDown class="ml-1 h-4 w-4" />
+                                            </div>
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Age
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Gender
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Place of Employment
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Designation
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                            @click="setSorting('issueDate')">
+                                            <div class="flex items-center">
+                                                Issue Date
+                                                <ArrowUpDown class="ml-1 h-4 w-4" />
+                                            </div>
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                            @click="setSorting('expiryDate')">
+                                            <div class="flex items-center">
+                                                Expiry Date
+                                                <ArrowUpDown class="ml-1 h-4 w-4" />
+                                            </div>
+                                        </th>
 
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hidden"
-                                        @click="setSorting('created-desc')">
-                                        <div class="flex items-center">
-                                            Created At
-                                            <ArrowUpDown class="ml-1 h-4 w-4" />
-                                        </div>
-                                    </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hidden"
+                                            @click="setSorting('created-desc')">
+                                            <div class="flex items-center">
+                                                Created At
+                                                <ArrowUpDown class="ml-1 h-4 w-4" />
+                                            </div>
+                                        </th>
 
-                                    <th scope="col"
-                                        class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-if="filteredCards.length === 0">
-                                    <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">
-                                        No health cards found matching your criteria.
-                                    </td>
-                                </tr>
-                                <tr v-for="card in filteredCards" :key="card.id" class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <input type="checkbox" :checked="selectedCards.includes(card.id)"
-                                            @change="toggleCardSelection(card.id)"
-                                            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
-                                    </td>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr v-if="filteredCards.length === 0">
+                                        <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">
+                                            No health cards found matching your criteria.
+                                        </td>
+                                    </tr>
+                                    <tr v-for="card in filteredCards" :key="card.id" class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <input type="checkbox" :checked="selectedCards.includes(card.id)"
+                                                @change="toggleCardSelection(card.id)"
+                                                class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+                                        </td>
 
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {{ card.print_code }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ card.full_name }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ card.age }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ card.gender }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ card.place_of_employment }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ card.designation }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ formatDate(card.date_of_issuance) }}
-                                    </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {{ card.print_code }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ card.full_name }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ card.age }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ card.gender }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ card.place_of_employment }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ card.designation }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ formatDate(card.date_of_issuance) }}
+                                        </td>
 
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ formatDate(card.date_of_expiration) }}
-                                    </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ formatDate(card.date_of_expiration) }}
+                                        </td>
 
-                                    <td class="hidden">
-                                        {{ formatDate(card.created_at) }}
-                                    </td>
+                                        <td class="hidden">
+                                            {{ formatDate(card.created_at) }}
+                                        </td>
 
-
-
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex justify-end gap-2">
-                                            <button class="text-gray-400 hover:text-gray-500"
-                                                @click="openEditModal(card)">
-                                                <Edit class="h-4 w-4" />
-                                                <span class="sr-only">Edit</span>
-                                            </button>
-                                            <button class="text-gray-400 hover:text-red-500"
-                                                @click="confirmDelete(card.id)">
-                                                <Trash2 class="h-4 w-4" />
-                                                <span class="sr-only">Delete</span>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex justify-end gap-2">
+                                                <button class="text-gray-400 hover:text-gray-500"
+                                                    @click="openEditModal(card)">
+                                                    <Edit class="h-4 w-4" />
+                                                    <span class="sr-only">Edit</span>
+                                                </button>
+                                                <button class="text-gray-400 hover:text-red-500"
+                                                    @click="confirmDelete(card.id)">
+                                                    <Trash2 class="h-4 w-4" />
+                                                    <span class="sr-only">Delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div>
-
                         <!-- Pagination -->
                         <PaginationHealthCard :pagination="props.pagination" :changePage="changePage"
                             :filters="props.filters" />
                     </div>
-
-
-
                 </div>
             </div>
 
             <!-- Add Health Card Modal -->
             <AddHealthCardModal v-if="showModal" @close="closeModal" />
 
-
-
-
             <AddUpdateHealthCardModal :show="isModalOpen" :editingCard="selectedCard" @closeModal="closeModalEdit"
                 @refreshData="refreshData" />
-
 
             <!-- Delete Confirmation Modal -->
             <div v-if="isDeleteModalOpen"
@@ -252,21 +243,17 @@
     </AppLayout>
 </template>
 
-
 <script setup lang="ts">
+// Script content remains unchanged
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { Printer, Plus, Edit, Trash2, Search, SlidersHorizontal, ArrowUpDown } from 'lucide-vue-next';
 import { defineProps } from 'vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
-
-
+import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
-
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import AddHealthCardModal from "@/components/AddHealthCardModal.vue";
 import AddUpdateHealthCardModal from "@/components/AddUpdateHealthCardModal.vue";
-
 import PaginationHealthCard from "@/components/PaginationHealtCard.vue";
 
 // Breadcrumbs
@@ -274,7 +261,6 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Health Card', href: '/health-ca
 
 const showModal = ref(false);
 const closeModal = () => { showModal.value = false; };
-// Props for Health Cards
 // Props for Health Cards
 const props = defineProps<{
     healthCards: Array<{
@@ -287,6 +273,12 @@ const props = defineProps<{
         type: string;
         status: string;
         health_card_type: string;
+        print_code: string;
+        age: number;
+        gender: string;
+        place_of_employment: string;
+        designation: string;
+        date_of_issuance: string;
     }>[];
     pagination: {
         current_page: number;
@@ -302,7 +294,6 @@ const props = defineProps<{
 
 // Reactive variables for filtering, with default values
 const categoryFilter = ref(props.filters.category || 'all');
-
 
 // Watchers to handle filter changes and ensure data reload on category change
 watch(() => categoryFilter.value, (newCategory) => {
@@ -348,9 +339,6 @@ const filteredCards = computed(() => {
         } else if (sortOption.value === 'name-desc') {
             result.sort((a, b) => (b.full_name || '').localeCompare(a.full_name || ''));
         }
-
-
-
 
     return result;
 });
@@ -420,23 +408,20 @@ const generatePDF = () => {
     }
 
     // Check if Laravel routes are defined
-    if (!window.Laravel?.routes?.generate_pdf) {
+    const page = usePage();
+    if (!page.props.routes.generate_pdf) {
         console.error("Laravel routes not defined.");
         return;
     }
 
     // Generate the URL by appending selected card IDs as a query parameter
-    const url = window.Laravel.routes.generate_pdf + '?selected_health_cards=' + selectedCards.value.join(',');
+    const url = page.props.routes.generate_pdf + '?selected_health_cards=' + selectedCards.value.join(',');
 
     // Open the generated PDF in a new tab
     window.open(url, '_blank');
 };
 
-
-
-
 const searchTerm = ref('');
-
 
 const cardToDeleteId = ref<string | null>(null);
 const isDeleteModalOpen = ref(false);
@@ -461,8 +446,6 @@ const deleteCard = () => {
         }
     });
 };
-
-
 
 const isModalOpen = ref(false);
 const selectedCard = ref(null); // This will hold the card data for editing
@@ -503,6 +486,15 @@ const performSearch = () => {
     });
 };
 
+const sortingColumn = ref(null);
+const sortingOrder = ref('asc');
 
-
+const setSorting = (column) => {
+    if (sortingColumn.value === column) {
+        sortingOrder.value = sortingOrder.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortingColumn.value = column;
+        sortingOrder.value = 'asc';
+    }
+};
 </script>

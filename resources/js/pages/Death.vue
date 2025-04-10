@@ -4,9 +4,9 @@
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex min-h-screen w-full flex-col bg-gray-50">
       <!-- Main Content -->
-      <main class="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <main class="flex flex-1 flex-col gap-4 p-2 md:gap-8 md:p-8">
         <!-- Tabs -->
-        <div class="w-full rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+     
           <!-- Tab Content -->
           <div class="p-4">
             <div v-if="activeTab === 'all'">
@@ -136,73 +136,67 @@
                                     <circle cx="12" cy="19" r="1" />
                                   </svg>
                                 </button>
-                                <transition enter-active-class="transition ease-out duration-100"
-                                  enter-from-class="transform opacity-0 scale-95"
-                                  enter-to-class="transform opacity-100 scale-100"
-                                  leave-active-class="transition ease-in duration-75"
-                                  leave-from-class="transform opacity-100 scale-100"
-                                  leave-to-class="transform opacity-0 scale-95">
-                                  <div v-if="activeDropdown === death.id"
-                                    class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                                    <div class="py-1">
-                                      <div class="px-4 py-2 text-sm text-gray-700 font-medium">Actions</div>
-                                      <button @click="viewDetails(death)"
-                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                          stroke-linecap="round" stroke-linejoin="round"
-                                          class="mr-2 h-4 w-4 text-gray-500">
-                                          <path
-                                            d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                                          <polyline points="14 2 14 8 20 8" />
-                                          <line x1="16" y1="13" x2="8" y2="13" />
-                                          <line x1="16" y1="17" x2="8" y2="17" />
-                                          <line x1="10" y1="9" x2="8" y2="9" />
-                                        </svg>
-                                        View Details
-                                      </button>
-                                      <button @click="editCertificate(death)"
-                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                          stroke-linecap="round" stroke-linejoin="round"
-                                          class="mr-2 h-4 w-4 text-gray-500">
-                                          <path d="M12 20h9" />
-                                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                        </svg>
-                                        Edit Certificate
-                                      </button>
-                                      <button @click="printCertificate(death.id)"
-                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                          stroke-linecap="round" stroke-linejoin="round"
-                                          class="mr-2 h-4 w-4 text-gray-500">
-                                          <polyline points="6 9 6 2 18 2 18 9" />
-                                          <path
-                                            d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                                          <rect x="6" y="14" width="12" height="8" />
-                                        </svg>
-                                        Print Certificate
-                                      </button>
-                                      <div class="border-t border-gray-100"></div>
-                                      <button @click="confirmDelete(death.id)"
-                                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors duration-150">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                          stroke-linecap="round" stroke-linejoin="round"
-                                          class="mr-2 h-4 w-4 text-red-500">
-                                          <path d="M3 6h18" />
-                                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                          <line x1="10" y1="11" x2="10" y2="17" />
-                                          <line x1="14" y1="11" x2="14" y2="17" />
-                                        </svg>
-                                        Delete
-                                      </button>
-                                    </div>
+                                <div v-if="activeDropdown === death.id"
+                                  class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                                  style="z-index: 9999;">
+                                  <div class="py-1">
+                                    <div class="px-4 py-2 text-sm text-gray-700 font-medium">Actions</div>
+                                    <button @click="viewDetails(death)"
+                                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        class="mr-2 h-4 w-4 text-gray-500">
+                                        <path
+                                          d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                        <polyline points="14 2 14 8 20 8" />
+                                        <line x1="16" y1="13" x2="8" y2="13" />
+                                        <line x1="16" y1="17" x2="8" y2="17" />
+                                        <line x1="10" y1="9" x2="8" y2="9" />
+                                      </svg>
+                                      View Details
+                                    </button>
+                                    <button @click="editCertificate(death)"
+                                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        class="mr-2 h-4 w-4 text-gray-500">
+                                        <path d="M12 20h9" />
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                      </svg>
+                                      Edit Certificate
+                                    </button>
+                                    <button @click="printCertificate(death.id)"
+                                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        class="mr-2 h-4 w-4 text-gray-500">
+                                        <polyline points="6 9 6 2 18 2 18 9" />
+                                        <path
+                                          d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                        <rect x="6" y="14" width="12" height="8" />
+                                      </svg>
+                                      Print Certificate
+                                    </button>
+                                    <div class="border-t border-gray-100"></div>
+                                    <button @click="confirmDelete(death.id)"
+                                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors duration-150">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        class="mr-2 h-4 w-4 text-red-500">
+                                        <path d="M3 6h18" />
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                        <line x1="10" y1="11" x2="10" y2="17" />
+                                        <line x1="14" y1="11" x2="14" y2="17" />
+                                      </svg>
+                                      Delete
+                                    </button>
                                   </div>
-                                </transition>
+                                </div>
                               </div>
                             </td>
                           </tr>
@@ -247,7 +241,7 @@
               </div>
             </div>
           </div>
-        </div>
+      
       </main>
 
       <!-- Certificate Details Modal -->
@@ -380,6 +374,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
+
 
 import {
   FileTextIcon,
@@ -627,76 +622,4 @@ const deleteDeath = () => {
   });
 };
 </script>
-
-<style>
-/* Add custom styles here if needed */
-.bg-opacity-10 {
-  --tw-bg-opacity: 0.1;
-}
-
-/* Input focus and hover effects */
-input:hover,
-select:hover,
-textarea:hover {
-  border-color: #9ca3af;
-}
-
-/* Custom scrollbar for modals */
-.max-h-\[80vh\]::-webkit-scrollbar {
-  width: 8px;
-}
-
-.max-h-\[80vh\]::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.max-h-\[80vh\]::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 10px;
-}
-
-.max-h-\[80vh\]::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
-}
-
-/* Required field indicator */
-.text-red-500 {
-  color: #ef4444;
-}
-
-/* Transition effects for form elements */
-input,
-select,
-textarea {
-  transition: all 0.2s ease-in-out;
-}
-
-/* Form section headers */
-h4.text-md {
-  color: #374151;
-  font-weight: 600;
-}
-
-/* Animation classes */
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-*{
-  text-transform: uppercase;
-}
-</style>
 

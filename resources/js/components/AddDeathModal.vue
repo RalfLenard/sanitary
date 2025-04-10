@@ -420,6 +420,15 @@
                                             placeholder="Underlying cause"
                                             class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors duration-200" />
                                     </div>
+
+                                    <div class="space-y-1.5">
+                                        <label class="block text-sm font-medium text-gray-700">
+                                            Cause of Death D
+                                        </label>
+                                        <input type="text" v-model="form.cause_of_death_d"
+                                            placeholder="Underlying cause"
+                                            class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors duration-200" />
+                                    </div>
                                     <div class="col-span-3">
                                         <h4 class="text-md font-medium text-gray-800 mb-3 pb-2 border-b">Medical
                                             Information</h4>
@@ -722,6 +731,7 @@ const form = useForm({
     cause_of_death_a: '',
     cause_of_death_b: '',
     cause_of_death_c: '',
+    cause_of_death_d: '',
     doctor: '',
     doctor_position: '',
     address: '',

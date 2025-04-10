@@ -39,6 +39,7 @@ class HealthCardController extends Controller
                 $query->where('full_name', 'like', "%{$search}%")
                     ->orWhere('health_card_type', 'like', "%{$search}%")
                     ->orWhere('place_of_employment', 'like', "%{$search}%")
+                    ->orWhere('barangay', 'like', "%{$search}%")
                     ->orWhere('designation', 'like', "%{$search}%");
             })
             ->when($category && $category !== 'all', function ($query) use ($category) {

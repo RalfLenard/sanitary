@@ -27,13 +27,13 @@
             </div>
             <div>
               <label for="full_name" class="block text-sm font-medium text-gray-700">Full Name</label>
-              <input id="full_name" v-model="form.full_name" type="text" required placeholder="John Doe"
+              <input id="full_name" v-model="form.full_name" type="text" required
                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
-                <input id="age" v-model="form.age" type="number" placeholder="25"
+                <input id="age" v-model="form.age" type="number" 
                   class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
               </div>
               <div>
@@ -49,17 +49,17 @@
             </div>
             <div>
               <label for="employment" class="block text-sm font-medium text-gray-700">Place of Employment</label>
-              <input id="employment" v-model="form.place_of_employment" type="text" required placeholder="ABC Corp"
+              <input id="employment" v-model="form.place_of_employment" type="text" required 
                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
             <div>
               <label for="designation" class="block text-sm font-medium text-gray-700">Designation</label>
-              <input id="designation" v-model="form.designation" type="text" placeholder="Manager"
+              <input id="designation" v-model="form.designation" type="text" 
                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
             <div>
               <label for="barangay" class="block text-sm font-medium text-gray-700">Barangay</label>
-              <input id="barangay" v-model="form.barangay" type="text" placeholder="Enter Barangay"
+              <input id="barangay" v-model="form.barangay" type="text"
                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
   
@@ -78,7 +78,7 @@
             </div>
             <div>
               <label for="inspector" class="block text-sm font-medium text-gray-700">Inspector Name</label>
-              <input id="inspector" v-model="form.inspector_name" type="text" placeholder="Enter Inspector Name"
+              <input id="inspector" v-model="form.inspector_name" type="text" 
                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
             <div>

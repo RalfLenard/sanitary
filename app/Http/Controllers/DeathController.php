@@ -27,7 +27,7 @@ class DeathController extends Controller
     }
 
     // Paginate results
-    $deaths = $query->paginate(5); // 5 per page, adjust as needed
+    $deaths = $query->paginate(50); // 5 per page, adjust as needed
 
     return Inertia::render('Death', [
         'deaths' => $deaths,
@@ -58,6 +58,7 @@ class DeathController extends Controller
             'cause_of_death_a' => 'nullable|string',
             'cause_of_death_b' => 'nullable|string',
             'cause_of_death_c' => 'nullable|string',
+            'cause_of_death_d' => 'nullable|string',
             'doctor' => 'nullable|string',
             'reviewed_by' => 'nullable|string',
             'informant_name' => 'nullable|string',
@@ -132,6 +133,7 @@ class DeathController extends Controller
             'cause_of_death_a' => 'nullable|string',
             'cause_of_death_b' => 'nullable|string',
             'cause_of_death_c' => 'nullable|string',
+            'cause_of_death_d' => 'nullable|string',
             'doctor' => 'nullable|string',
             'reviewed_by' => 'nullable|string',
             'informant_name' => 'nullable|string',

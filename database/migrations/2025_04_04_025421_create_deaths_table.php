@@ -34,6 +34,7 @@ return new class extends Migration
             $table->string('cause_of_death_a')->nullable();
             $table->string('cause_of_death_b')->nullable();
             $table->string('cause_of_death_c')->nullable();
+            $table->string('cause_of_death_d')->nullable();
             $table->string('doctor')->nullable();
             $table->string('doctor_position')->nullable();
             $table->string('address')->nullable();
