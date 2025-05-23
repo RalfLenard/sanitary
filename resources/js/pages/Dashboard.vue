@@ -27,10 +27,7 @@ import {
 import Chart from 'chart.js/auto';
 
 // Accept props from the controller
-const props = defineProps({
-  chartData: Object,
-  availableYears: Array,
-});
+
 
 const showAddDialog = ref(false);
 
@@ -40,7 +37,12 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
 ];
-
+const props = defineProps({
+  chartData: Object,
+  availableYears: Array,
+  totalSanitaryCount: Number,
+  totalSanitaryCounts: Number,
+});
 // State
 const yearFilter = ref(new Date().getFullYear());
 const availableYears = ref([]);
@@ -50,13 +52,29 @@ const selectedBarangay = ref('All');
 const summaryData = reactive({
   totalHealthCards: 0,
   healthCardGrowth: 0,
-  activePermits: 450,
+  totalSanitaryCount: 0,
   permitGrowth: 3,
-  newApplications: 120,
+  totalSanitaryCounts: 0,
   applicationGrowth: 7,
   pendingRenewals: 50,
   renewalGrowth: 2
 });
+
+watch(
+  () => props.totalSanitaryCount,
+  (newVal) => {
+    summaryData.totalSanitaryCount = newVal;
+  },
+  { immediate: true } // Immediately set the value on mount
+);
+
+watch(
+  () => props.totalSanitaryCounts,
+  (newVal) => {
+    summaryData.totalSanitaryCounts = newVal;
+  },
+  { immediate: true } // Immediately set the value on mount
+);
 
 onMounted(() => {
   if (props.availableYears) {
@@ -716,14 +734,7 @@ onMounted(() => {
             </div>
           </div>
           <div class="mt-4 flex items-center">
-            <span :class="[
-              'text-xs font-medium',
-              summaryData.healthCardGrowth >= 0 ? 'text-green-600' : 'text-red-600'
-            ]">
-              <TrendingUp v-if="summaryData.healthCardGrowth >= 0" class="inline h-3 w-3 mr-1" />
-              <TrendingDown v-else class="inline h-3 w-3 mr-1" />
-              {{ Math.abs(summaryData.healthCardGrowth) }}% FROM LAST MONTH
-            </span>
+           
           </div>
         </div>
 
@@ -734,18 +745,11 @@ onMounted(() => {
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-500">ACTIVE PERMITS</p>
-              <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.activePermits }}</h3>
+              <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalSanitaryCount }}</h3>
             </div>
           </div>
           <div class="mt-4 flex items-center">
-            <span :class="[
-              'text-xs font-medium',
-              summaryData.permitGrowth >= 0 ? 'text-green-600' : 'text-red-600'
-            ]">
-              <TrendingUp v-if="summaryData.permitGrowth >= 0" class="inline h-3 w-3 mr-1" />
-              <TrendingDown v-else class="inline h-3 w-3 mr-1" />
-              {{ Math.abs(summaryData.permitGrowth) }}% FROM LAST MONTH
-            </span>
+          
           </div>
         </div>
 
@@ -756,18 +760,11 @@ onMounted(() => {
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-500">NEW APPLICATIONS</p>
-              <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.newApplications }}</h3>
+              <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalSanitaryCounts }}</h3>
             </div>
           </div>
           <div class="mt-4 flex items-center">
-            <span :class="[
-              'text-xs font-medium',
-              summaryData.applicationGrowth >= 0 ? 'text-green-600' : 'text-red-600'
-            ]">
-              <TrendingUp v-if="summaryData.applicationGrowth >= 0" class="inline h-3 w-3 mr-1" />
-              <TrendingDown v-else class="inline h-3 w-3 mr-1" />
-              {{ Math.abs(summaryData.applicationGrowth) }}% FROM LAST MONTH
-            </span>
+           
           </div>
         </div>
 
@@ -782,14 +779,7 @@ onMounted(() => {
             </div>
           </div>
           <div class="mt-4 flex items-center">
-            <span :class="[
-              'text-xs font-medium',
-              summaryData.renewalGrowth >= 0 ? 'text-green-600' : 'text-red-600'
-            ]">
-              <TrendingUp v-if="summaryData.renewalGrowth >= 0" class="inline h-3 w-3 mr-1" />
-              <TrendingDown v-else class="inline h-3 w-3 mr-1" />
-              {{ Math.abs(summaryData.renewalGrowth) }}% FROM LAST MONTH
-            </span>
+          
           </div>
         </div>
       </div>

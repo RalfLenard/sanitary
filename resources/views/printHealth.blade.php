@@ -270,7 +270,7 @@
             'others' => base64_encode(file_get_contents(public_path('images/non.png')))
         ];
 
-        $imgSrc = $img_type[$health->health_card_type] ?? base64_encode(file_get_contents(public_path('images/default.jpg')));
+        $imgSrc = $img_type[$health->health_card_type] ?? base64_encode(file_get_contents(public_path('images/non.png')));
     @endphp
         <div class="card">
             <div class="left">

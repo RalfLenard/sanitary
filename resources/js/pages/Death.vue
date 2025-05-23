@@ -109,7 +109,7 @@
                             </th>
                           </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200"  style="text-transform: uppercase;">
                           <tr v-for="(death, index) in deaths.data" :key="death.id"
                             :class="[index % 2 === 0 ? 'bg-white' : 'bg-gray-50', 'hover:bg-blue-50 transition-colors duration-150']">
                             <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800">
@@ -518,6 +518,7 @@ const certificateSections = computed(() => {
         { label: "Immediate Cause", value: selectedCertificate.value.cause_of_death_a },
         { label: "Antecedent Cause", value: selectedCertificate.value.cause_of_death_b },
         { label: "Underlying Cause", value: selectedCertificate.value.cause_of_death_c },
+        { label: "Underlying Cause other", value: selectedCertificate.value.cause_of_death_d },
       ],
     },
     {

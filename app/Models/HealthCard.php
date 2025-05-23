@@ -24,7 +24,8 @@ class HealthCard extends Model
         'barangay',
         'inspector_name',
         'print_code',
-        'rhu'
+        'rhu',
+        'confirmed'
     ];
 
     protected $casts = [

@@ -122,7 +122,7 @@ const form = useForm({
   barangay: "",
   inspector_name: "",
   date_of_issuance: "",
-  rhu: "rhu-i",
+  rhu: "",
 });
 
 const submit = () => {

@@ -100,6 +100,8 @@ class DeathController extends Controller
             ->ignoreHttpsErrors()
             ->format('LEGAL') // Set correct dimensions
             ->showBackground()
+            ->setChromePath('C:\Program Files\Google\Chrome\Application\chrome.exe')
+            ->addChromiumArguments(['--no-sandbox', '--disable-gpu'])
             ->savePdf($pdfPath);
 
         // Return PDF inline

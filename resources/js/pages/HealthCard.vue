@@ -1,4 +1,5 @@
 <template>
+
     <Head title="Health Card" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl ">
@@ -39,14 +40,14 @@
                                 class="px-4 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700">
                                 <option value="created-desc">Created At (Newest)</option>
                                 <option value="created-asc">Created At (Oldest)</option>
-                                
+
                                 <option value="name-asc">Name (A-Z)</option>
                                 <option value="name-desc">Name (Z-A)</option>
                                 <option value="date-asc">Issue Date (Oldest)</option>
                                 <option value="date-desc">Issue Date (Newest)</option>
                                 <option value="expiry-asc">Expiry Date (Soonest)</option>
                                 <option value="expiry-desc">Expiry Date (Latest)</option>
-                               
+
                             </select>
 
                             <select v-model="categoryFilter"
@@ -55,6 +56,7 @@
                                 <option value="food">Food</option>
                                 <option value="non_food">Non-Food</option>
                                 <option value="others">Others</option>
+                                <option value="NOT_PRINTED">Not Printed</option>
                             </select>
                         </div>
                     </div>
@@ -65,7 +67,7 @@
                         <!-- Added overflow container -->
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                                <thead class="bg-gray-50 sticky top-0 z-10">
                                     <tr>
                                         <th scope="col"
                                             class="w-[50px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -139,9 +141,9 @@
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-white divide-y divide-gray-200" style="text-transform: uppercase;">
                                     <tr v-if="filteredCards.length === 0">
-                                        <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">
+                                        <td colspan="11" class="px-6 py-12 text-center text-sm text-gray-500">
                                             No health cards found matching your criteria.
                                         </td>
                                     </tr>
@@ -202,9 +204,68 @@
                         </div>
                     </div>
                     <div>
-                        <!-- Pagination -->
-                        <PaginationHealthCard :pagination="props.pagination" :changePage="changePage"
-                            :filters="props.filters" />
+                        <!-- Improved Pagination -->
+                        <div class="flex items-center justify-between mt-6">
+                            <div class="text-sm text-gray-500">
+                                Showing <span class="font-medium">{{ filteredCards.length }}</span> of <span
+                                    class="font-medium">{{ props.pagination.total }}</span> results
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button @click="changePage(props.pagination.current_page - 1)"
+                                    :disabled="props.pagination.current_page === 1"
+                                    class="inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Previous
+                                </button>
+
+                                <div class="flex items-center space-x-1">
+                                    <!-- First page -->
+                                    <button v-if="props.pagination.current_page > 3" @click="changePage(1)"
+                                        class="inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700 hover:bg-gray-50">
+                                        1
+                                    </button>
+
+                                    <!-- Ellipsis if needed -->
+                                    <span v-if="props.pagination.current_page > 4" class="px-2">...</span>
+
+                                    <!-- Page before current -->
+                                    <button v-if="props.pagination.current_page > 1"
+                                        @click="changePage(props.pagination.current_page - 1)"
+                                        class="inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700 hover:bg-gray-50">
+                                        {{ props.pagination.current_page - 1 }}
+                                    </button>
+
+                                    <!-- Current page -->
+                                    <button
+                                        class="inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-primary text-white">
+                                        {{ props.pagination.current_page }}
+                                    </button>
+
+                                    <!-- Page after current -->
+                                    <button v-if="props.pagination.current_page < props.pagination.last_page"
+                                        @click="changePage(props.pagination.current_page + 1)"
+                                        class="inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700 hover:bg-gray-50">
+                                        {{ props.pagination.current_page + 1 }}
+                                    </button>
+
+                                    <!-- Ellipsis if needed -->
+                                    <span v-if="props.pagination.current_page < props.pagination.last_page - 3"
+                                        class="px-2">...</span>
+
+                                    <!-- Last page -->
+                                    <button v-if="props.pagination.current_page < props.pagination.last_page - 2"
+                                        @click="changePage(props.pagination.last_page)"
+                                        class="inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700 hover:bg-gray-50">
+                                        {{ props.pagination.last_page }}
+                                    </button>
+                                </div>
+
+                                <button @click="changePage(props.pagination.current_page + 1)"
+                                    :disabled="props.pagination.current_page === props.pagination.last_page"
+                                    class="inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Next
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -240,6 +301,8 @@
                 </div>
             </div>
         </div>
+
+        <FlashToast />
     </AppLayout>
 </template>
 
@@ -255,6 +318,8 @@ import { type BreadcrumbItem } from '@/types';
 import AddHealthCardModal from "@/components/AddHealthCardModal.vue";
 import AddUpdateHealthCardModal from "@/components/AddUpdateHealthCardModal.vue";
 import PaginationHealthCard from "@/components/PaginationHealtCard.vue";
+import { route } from 'ziggy-js';
+import FlashToast from '@/components/FlashToast.vue'; 
 
 // Breadcrumbs
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Health Card', href: '/health-card' }];
@@ -279,7 +344,8 @@ const props = defineProps<{
         place_of_employment: string;
         designation: string;
         date_of_issuance: string;
-    }>[];
+        confirmed: boolean; // ✅ added confirmed here
+    }>;
     pagination: {
         current_page: number;
         last_page: number;
@@ -291,6 +357,7 @@ const props = defineProps<{
         sort: string;
     };
 }>();
+
 
 // Reactive variables for filtering, with default values
 const categoryFilter = ref(props.filters.category || 'all');
@@ -316,29 +383,37 @@ watch(() => props.filters.sort, (newSort) => {
 const filteredCards = computed(() => {
     let result = [...props.healthCards];
 
-    // Apply category filter directly, no mapping necessary
+    // Apply category filter
+    // Apply category filter
     if (categoryFilter.value !== 'all') {
-        result = result.filter(card => card.health_card_type === categoryFilter.value);
+        if (categoryFilter.value === 'NOT_PRINTED') {
+            // Filter for not printed cards (where confirmed is 0)
+            result = result.filter(card => card.confirmed === 0);
+        } else {
+            // Filter by health card type
+            result = result.filter(card => card.health_card_type === categoryFilter.value);
+        }
     }
+
 
     // Apply sorting
     if (sortOption.value === 'created-asc') {
         result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        } else if (sortOption.value === 'created-desc') {
-            result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        } else if (sortOption.value === 'date-asc') {
-            result.sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime());
-        } else if (sortOption.value === 'date-desc') {
-            result.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
-        } else if (sortOption.value === 'expiry-asc') {
-            result.sort((a, b) => new Date(a.date_of_expiration).getTime() - new Date(b.date_of_expiration).getTime());
-        } else if (sortOption.value === 'expiry-desc') {
-            result.sort((a, b) => new Date(b.date_of_expiration).getTime() - new Date(a.date_of_expiration).getTime());
-        } else if (sortOption.value === 'name-asc') {
-            result.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
-        } else if (sortOption.value === 'name-desc') {
-            result.sort((a, b) => (b.full_name || '').localeCompare(a.full_name || ''));
-        }
+    } else if (sortOption.value === 'created-desc') {
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (sortOption.value === 'date-asc') {
+        result.sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime());
+    } else if (sortOption.value === 'date-desc') {
+        result.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
+    } else if (sortOption.value === 'expiry-asc') {
+        result.sort((a, b) => new Date(a.date_of_expiration).getTime() - new Date(b.date_of_expiration).getTime());
+    } else if (sortOption.value === 'expiry-desc') {
+        result.sort((a, b) => new Date(b.date_of_expiration).getTime() - new Date(a.date_of_expiration).getTime());
+    } else if (sortOption.value === 'name-asc') {
+        result.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+    } else if (sortOption.value === 'name-desc') {
+        result.sort((a, b) => (b.full_name || '').localeCompare(a.full_name || ''));
+    }
 
     return result;
 });
@@ -438,10 +513,12 @@ const deleteCard = () => {
 
     Inertia.delete(route('health-card.delete', cardToDeleteId.value), {
         onSuccess: () => {
+            FlashToast.success('Success', 'Health card deleted successfully.', 3000); // Show success toast for 3 seconds
             isDeleteModalOpen.value = false;
             cardToDeleteId.value = null;
         },
         onError: (errors) => {
+            FlashToast.error('Error', 'Failed to delete the health card.', 3000); // Show error toast for 3 seconds
             alert("Failed to delete the health card.");
         }
     });
@@ -498,3 +575,18 @@ const setSorting = (column) => {
     }
 };
 </script>
+
+<style scoped>
+/* Add some styling for the pagination */
+.pagination-button {
+    transition: all 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.pagination-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+</style>

@@ -6,6 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import AddPermitModal from "@/components/AddPermitModal.vue";
 import UpdatePermitModal from "@/components/UpdatePermitModal.vue";
+import { Inertia } from '@inertiajs/inertia';
 
 // Breadcrumbs
 const breadcrumbs: BreadcrumbItem[] = [
@@ -25,6 +26,31 @@ const showAddDialog = ref(false);
 const selectedQuarter = ref<number | null>(null);
 const isQuarterFilterOpen = ref(false);
 const quarterlyData = ref([]);
+
+const cardToDeleteId = ref<string | null>(null);
+const isDeleteModalOpen = ref(false);
+
+// Open confirmation modal
+const confirmDelete = (id: string) => {
+    cardToDeleteId.value = id;
+    isDeleteModalOpen.value = true;
+};
+
+// Delete card using Inertia
+const deleteCard = () => {
+    if (!cardToDeleteId.value) return;
+
+    Inertia.delete(route('sanitary.delete', cardToDeleteId.value), {
+        onSuccess: () => {
+            isDeleteModalOpen.value = false;
+            cardToDeleteId.value = null;
+        },
+        onError: (errors) => {
+            alert("Failed to delete the Sanitary Permit.");
+        }
+    });
+};
+
 
 const filteredPermits = computed(() => {
   let permits = props.sanitaryPermits.data;
@@ -288,7 +314,7 @@ const performSearch = () => {
                 </thead>
                 <tbody>
                   <tr v-for="permit in filteredPermits" :key="permit.id"
-                    class="border-b transition-colors hover:bg-gray-50 even:bg-gray-50">
+                    class="border-b transition-colors hover:bg-gray-50 even:bg-gray-50"  style="text-transform: uppercase;">
                     <td class="p-4 font-medium">{{ permit.id }}</td>
                     <td class="p-4">{{ permit.name_of_establishment }}</td>
                     <td class="p-4">{{ permit.name_of_owner }}</td>
@@ -319,10 +345,10 @@ const performSearch = () => {
                               class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                               Edit Permit
                             </button>
-                            <button @click="markAsInspected(permit.id)"
+                            <!-- <button @click="markAsInspected(permit.id)"
                               class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                               Inspect Done
-                            </button>
+                            </button> -->
                             <button @click="renewPermit(permit.id)"
                               class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                               Renew Permit
@@ -330,6 +356,10 @@ const performSearch = () => {
                             <button @click="printCertificate(permit.id)"
                               class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                               Print Certificate
+                            </button>
+                            <button  @click="confirmDelete(permit.id)"
+                              class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -375,6 +405,30 @@ const performSearch = () => {
 
         <!-- Update Permit Modal -->
         <UpdatePermitModal :show="isUpdateModalOpen" :permit="selectedPermit" @close="closeUpdateModal" />
+
+        <div v-if="isDeleteModalOpen"
+                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium">Are you sure?</h3>
+                        <p class="mt-2 text-sm text-gray-500">
+                            This action cannot be undone. This will permanently delete the Sanitary Permit.
+                        </p>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 rounded-b-lg">
+                        <button type="button"
+                            class="px-4 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700 hover:bg-gray-50"
+                            @click="isDeleteModalOpen = false">
+                            Cancel
+                        </button>
+                        <button type="button"
+                            class="px-4 py-2 rounded-md text-sm font-medium shadow-sm bg-red-600 text-white hover:bg-red-700"
+                            @click="deleteCard">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
       </div>
     </div>
   </AppLayout>

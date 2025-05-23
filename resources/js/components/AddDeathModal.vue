@@ -237,6 +237,8 @@
                                             <option value="" disabled>Select a Remarks</option>
                                             <option value="WITH INSURANCE">WITH INSURANCE</option>
                                             <option value="WITHOUT INSURANCE">WITHOUT INSURANCE</option>
+                                            <option value="*WITH INSURANCE">*WITH INSURANCE</option>
+                                            <option value="*WITHOUT INSURANCE">*WITHOUT INSURANCE</option>
                                     
                                         </select>
                                     </div>
@@ -486,7 +488,7 @@
                                             class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors duration-200">
                                             <option value="" disabled>Select a Address</option>
                                             <option value="SAN NICOLAS POBLACION, CONCEPCION, TARLAC">SAN NICOLAS POBLACION, CONCEPCION, TARLAC</option>
-                                            <option value="BALUTO, CONCEPCION, TARLAC">BALUTO, CONCEPCION, TARLAC</option>
+                                            <option value="BALUTU, CONCEPCION, TARLAC">BALUTU, CONCEPCION, TARLAC</option>
                                             <option value="STA. CRUZ, CONCEPCION, TARLAC">STA. CRUZ, CONCEPCION, TARLAC</option>
                                             <option value="TINANG, CONCEPCION, TARLAC">TINANG, CONCEPCION, TARLAC</option>
                                             <option value="OTHERS">OTHERS</option>
@@ -810,7 +812,7 @@ const populateForm = () => {
   
   const addressOptions = [
     "SAN NICOLAS POBLACION, CONCEPCION, TARLAC", 
-    "BALUTO, CONCEPCION, TARLAC", 
+    "BALUTU, CONCEPCION, TARLAC", 
     "STA. CRUZ, CONCEPCION, TARLAC", 
     "TINANG, CONCEPCION, TARLAC"
   ];

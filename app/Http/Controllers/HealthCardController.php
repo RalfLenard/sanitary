@@ -9,6 +9,8 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 use Carbon\Carbon;
+use Illuminate\Validation\Rule;
+
 
 
 class HealthCardController extends Controller
@@ -16,8 +18,8 @@ class HealthCardController extends Controller
     public function healthCard(Request $request)
     {
         $search = $request->input('search');
-        $category = $request->input('category', 'all'); // Default to 'all'
-        $sort = $request->input('sort', 'created-desc'); // Default sorting option
+        $category = $request->input('category', 'all');
+        $sort = $request->input('sort', 'created-desc');
 
         $healthCards = HealthCard::select(
             'id',
@@ -33,54 +35,80 @@ class HealthCardController extends Controller
             'inspector_name',
             'barangay',
             'created_at',
-            'rhu'
+            'rhu',
+            'confirmed'
         )
             ->when($search, function ($query, $search) {
-                $query->where('full_name', 'like', "%{$search}%")
-                    ->orWhere('health_card_type', 'like', "%{$search}%")
-                    ->orWhere('place_of_employment', 'like', "%{$search}%")
-                    ->orWhere('barangay', 'like', "%{$search}%")
-                    ->orWhere('designation', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('health_card_type', 'like', "%{$search}%")
+                        ->orWhere('place_of_employment', 'like', "%{$search}%")
+                        ->orWhere('barangay', 'like', "%{$search}%")
+                        ->orWhere('inspector_name', 'like', "%{$search}%")
+                        ->orWhere('designation', 'like', "%{$search}%");
+                });
             })
             ->when($category && $category !== 'all', function ($query) use ($category) {
-                $query->where('health_card_type', $category);
+                if (strtoupper($category) === 'NOT_PRINTED') {
+                    // For unprinted cards, check if 'confirmed' is false or NULL
+                    $query->where(function ($q) {
+                        $q->where('confirmed', false) // false represents not printed
+                          ->orWhereNull('confirmed');  // Handle NULL values where the status is not set
+                    });
+                } else {
+                    // Filter by health_card_type if category is other than "Not Printed"
+                    $query->where('health_card_type', $category);
+                }
             })
+            
             ->orderBy($this->getSortColumn($sort), $this->getSortDirection($sort))
             ->paginate(50)
-            ->appends(['search' => $search, 'category' => $category, 'sort' => $sort]); // Append filters to pagination
+            ->appends([
+                'search' => $search,
+                'category' => $category,
+                'sort' => $sort,
+            ]);
 
         return Inertia::render('HealthCard', [
             'healthCards' => $healthCards->items(),
             'pagination' => $healthCards,
-            'filters' => ['search' => $search, 'category' => $category, 'sort' => $sort],
+            'filters' => [
+                'search' => $search,
+                'category' => $category,
+                'sort' => $sort,
+            ],
+            'routes' => [
+                'generate_pdf' => route('generate_pdf'),
+            ]
         ]);
     }
 
 
-    private function getSortColumn($sort)
-{
-    switch ($sort) {
-        case 'name-asc':
-        case 'name-desc':
-            return 'full_name';
-        case 'date-asc':
-        case 'date-desc':
-            return 'date_of_issuance';
-        case 'expiry-asc':
-        case 'expiry-desc':
-            return 'date_of_expiration';
-        case 'created-asc':
-        case 'created-desc':
-            return 'created_at';
-        default:
-            return 'created_at'; // Default sorting column is created_at
-    }
-}
 
-private function getSortDirection($sort)
-{
-    return in_array($sort, ['name-asc', 'date-asc', 'expiry-asc', 'created-asc']) ? 'asc' : 'desc';
-}
+    private function getSortColumn($sort)
+    {
+        switch ($sort) {
+            case 'name-asc':
+            case 'name-desc':
+                return 'full_name';
+            case 'date-asc':
+            case 'date-desc':
+                return 'date_of_issuance';
+            case 'expiry-asc':
+            case 'expiry-desc':
+                return 'date_of_expiration';
+            case 'created-asc':
+            case 'created-desc':
+                return 'created_at';
+            default:
+                return 'created_at'; // Default sorting column is created_at
+        }
+    }
+
+    private function getSortDirection($sort)
+    {
+        return in_array($sort, ['name-asc', 'date-asc', 'expiry-asc', 'created-asc']) ? 'asc' : 'desc';
+    }
 
 
 
@@ -98,7 +126,6 @@ private function getSortDirection($sort)
             'barangay' => 'nullable|max:255',
             'inspector_name' => 'nullable|max:255',
             'rhu' => 'nullable|max:255',
-
         ]);
 
         // Generate Print Code
@@ -108,42 +135,43 @@ private function getSortDirection($sort)
         $issuanceDate = Carbon::parse($request->date_of_issuance);
         $expirationDate = null;
 
-        if ($request->health_card_type === 'non_food') {
+        if (strtolower($request->health_card_type) === 'non_food') {
             $expirationDate = $issuanceDate->copy()->addMonths(12);
-        } elseif ($request->health_card_type === 'food') {
+        } elseif (strtolower($request->health_card_type) === 'food') {
             $expirationDate = $issuanceDate->copy()->addMonths(6);
-        } elseif ($request->health_card_type === 'others') {
-            $expirationDate = Carbon::now()->endOfYear(); // Always sets to December 31 of the current year
+        } elseif (strtolower($request->health_card_type) === 'others') {
+            $expirationDate = Carbon::now()->endOfYear();
         }
 
-        // Create Health Card
+        // Create Health Card with all fields uppercased
         $healthCard = HealthCard::create([
-            'full_name' => $request->full_name,
+            'full_name' => strtoupper($request->full_name),
             'health_card_type' => $request->health_card_type,
             'age' => $request->age,
             'gender' => $request->gender,
-            'place_of_employment' => $request->place_of_employment,
-            'designation' => $request->designation,
+            'place_of_employment' => strtoupper($request->place_of_employment),
+            'designation' => strtoupper($request->designation ?? ''),
             'date_of_issuance' => $issuanceDate,
             'date_of_expiration' => $expirationDate,
-            'print_code' => $printCode,
-            'barangay' => $request->barangay,
-            'inspector_name' => $request->inspector_name,
-            'rhu' => $request->rhu,
+            'print_code' => strtoupper($printCode),
+            'barangay' => strtoupper($request->barangay ?? ''),
+            'inspector_name' => strtoupper($request->inspector_name ?? ''),
+            'rhu' => strtoupper($request->rhu ?? ''),
         ]);
 
         return redirect()->back()->with('success', 'Health card added successfully');
     }
 
+
     public function updateHealthCard(Request $request, $id)
     {
         $request->validate([
             'full_name' => 'required|max:255',
-            'health_card_type' => 'max:255',
-            'age' => 'max:255',
+            'health_card_type' => 'required|max:255|in:food,non_food,others',
+            'age' => 'nullable|max:255',
             'gender' => 'nullable|max:15',
-            'place_of_employment' => 'max:255',
-            'designation' => 'max:255',
+            'place_of_employment' => 'nullable|max:255',
+            'designation' => 'nullable|max:255',
             'date_of_issuance' => 'required|date',
             'barangay' => 'nullable|max:255',
             'inspector_name' => 'nullable|max:255',
@@ -163,31 +191,38 @@ private function getSortDirection($sort)
         }
 
         try {
+            // Find health card or throw ModelNotFoundException if not found
             $health = HealthCard::findOrFail($id);
+
+            // Update the health card
             $health->update([
-                'full_name' => $request->full_name,
-                'health_card_type' => $request->health_card_type,
+                'full_name' => strtoupper($request->full_name),
+                'health_card_type' => ($request->health_card_type),
                 'age' => $request->age,
                 'gender' => $request->gender,
-                'place_of_employment' => $request->place_of_employment,
-                'designation' => $request->designation,
-                'date_of_issuance' => $request->date_of_issuance,
-                'date_of_expiration' => $expirationDate, // ✅ Now updating expiration date
-                'barangay' => $request->barangay,
-                'inspector_name' => $request->inspector_name,
-                'rhu' => $request->rhu,
+                'place_of_employment' => strtoupper($request->place_of_employment ?? ''),
+                'designation' => strtoupper($request->designation ?? ''),
+                'date_of_issuance' => $issuanceDate,
+                'date_of_expiration' => $expirationDate,
+                'barangay' => strtoupper($request->barangay ?? ''),
+                'inspector_name' => strtoupper($request->inspector_name ?? ''),
+                'rhu' => strtoupper($request->rhu ?? ''),
             ]);
 
             session()->flash('success', 'Health Card updated successfully');
-
             return redirect()->back();
 
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Health card not found. Please try again.']);
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['error' => 'Failed to update health card. Please try again.']);
         }
     }
+
 
     public function generatePdf(Request $request)
     {
@@ -211,9 +246,12 @@ private function getSortDirection($sort)
 
         // Generate PDF using Browsershot and stream it directly
         $pdfContent = Browsershot::html($html)
+            ->setChromePath('C:\Program Files\Google\Chrome\Application\chrome.exe')
+            ->addChromiumArguments(['--no-sandbox', '--disable-gpu'])
             ->format('A4')
             ->orientation('landscape')
             ->pdf();
+
 
         // Stream the PDF directly to the browser
         return response($pdfContent, 200, [
