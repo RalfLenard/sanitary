@@ -4,49 +4,48 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import { computed, defineProps } from 'vue'
-import { 
-  PlusIcon, 
-  DownloadIcon, 
-  SearchIcon, 
-  FilterIcon, 
+import {   
+  PlusIcon,   
+  DownloadIcon,   
+  SearchIcon,   
+  FilterIcon,   
   MoreHorizontalIcon 
 } from 'lucide-vue-next'
-
 import AddPermitModal from "@/components/AddPermitModal.vue";
-
-
 import { ref, reactive, onMounted, watch } from 'vue';
-import { 
-  CreditCard, 
-  ClipboardCheck, 
-  FileText, 
-  RefreshCw, 
-  TrendingUp, 
-  TrendingDown 
+import {   
+  CreditCard,   
+  ClipboardCheck,   
+  FileText,   
+  RefreshCw,   
+  TrendingUp,   
+  TrendingDown,
+  Skull
 } from 'lucide-vue-next';
 import Chart from 'chart.js/auto';
 
 // Accept props from the controller
-
-
 const showAddDialog = ref(false);
-
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-    },
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+  },
 ];
+
 const props = defineProps({
   chartData: Object,
   availableYears: Array,
   totalSanitaryCount: Number,
   totalSanitaryCounts: Number,
+  totalDeath: Number, // Added totalDeath prop
 });
+
 // State
 const yearFilter = ref(new Date().getFullYear());
 const availableYears = ref([]);
 const selectedBarangay = ref('All');
+const selectedDeathBarangay = ref('All'); // New filter for death chart
 
 // Summary data - Initialize with default values to prevent undefined errors
 const summaryData = reactive({
@@ -57,7 +56,8 @@ const summaryData = reactive({
   totalSanitaryCounts: 0,
   applicationGrowth: 7,
   pendingRenewals: 50,
-  renewalGrowth: 2
+  renewalGrowth: 2,
+  totalDeath: 0, // Added totalDeath to summary
 });
 
 watch(
@@ -65,7 +65,7 @@ watch(
   (newVal) => {
     summaryData.totalSanitaryCount = newVal;
   },
-  { immediate: true } // Immediately set the value on mount
+  { immediate: true }
 );
 
 watch(
@@ -73,7 +73,16 @@ watch(
   (newVal) => {
     summaryData.totalSanitaryCounts = newVal;
   },
-  { immediate: true } // Immediately set the value on mount
+  { immediate: true }
+);
+
+// Watch for totalDeath changes
+watch(
+  () => props.totalDeath,
+  (newVal) => {
+    summaryData.totalDeath = newVal;
+  },
+  { immediate: true }
 );
 
 onMounted(() => {
@@ -81,7 +90,6 @@ onMounted(() => {
     availableYears.value = props.availableYears;
   }
 });
-
 
 // Chart references
 const healthCardChart = ref(null);
@@ -92,6 +100,7 @@ const barangayChart = ref(null);
 const rhuHealthCardChart = ref(null);
 const rhuMonthlyChart = ref(null);
 const barangayMonthlyChart = ref(null);
+const deathBarangayMonthlyChart = ref(null); // New death chart reference
 
 // Chart instances
 let healthCardChartInstance = null;
@@ -102,6 +111,7 @@ let barangayChartInstance = null;
 let rhuHealthCardChartInstance = null;
 let rhuMonthlyChartInstance = null;
 let barangayMonthlyChartInstance = null;
+let deathBarangayMonthlyChartInstance = null; // New death chart instance
 
 // Chart data - now using props from controller
 const chartData = reactive({
@@ -137,11 +147,15 @@ const chartData = reactive({
     labels: [],
     datasets: []
   },
-  sanitaryMonthly: { // New chart data for sanitary monthly
+  sanitaryMonthly: {
     labels: [],
     datasets: []
   },
-  sanitaryQuarterly: { // New chart data for sanitary quarterly
+  sanitaryQuarterly: {
+    labels: [],
+    datasets: []
+  },
+  deathBarangayMonthly: { // New death chart data
     labels: [],
     datasets: []
   }
@@ -156,15 +170,24 @@ const barangayList = computed(() => {
   return ['All'];
 });
 
+// List of barangays for death filter
+const deathBarangayList = computed(() => {
+  if (props.chartData?.deathBarangayMonthly?.datasets) {
+    const barangays = props.chartData.deathBarangayMonthly.datasets.map(dataset => dataset.label);
+    return ['All', ...barangays];
+  }
+  return ['All'];
+});
+
 // Initialize chart data from props
 const initializeChartData = () => {
   if (!props.chartData) return;
-
+  
   // Generate dynamic colors for many barangays
   const generateColors = (count) => {
     const colors = [];
     for (let i = 0; i < count; i++) {
-      const hue = Math.floor((360 / count) * i); // evenly distributed hues
+      const hue = Math.floor((360 / count) * i);
       colors.push(`hsl(${hue}, 70%, 60%)`);
     }
     return colors;
@@ -175,7 +198,6 @@ const initializeChartData = () => {
     const labels = props.chartData.barangay.labels || [];
     const data = props.chartData.barangay.data || [];
     const backgroundColors = generateColors(labels.length);
-
     chartData.barangay = {
       labels,
       datasets: [{
@@ -194,16 +216,35 @@ const initializeChartData = () => {
       labels: props.chartData.barangayMonthly.labels || [],
       datasets: props.chartData.barangayMonthly.datasets || []
     };
-    
-    // Enhance datasets with better styling
+        
     if (chartData.barangayMonthly.datasets) {
       chartData.barangayMonthly.datasets = chartData.barangayMonthly.datasets.map((dataset, index) => {
-        // Generate a consistent color based on the barangay name
         const hue = Math.floor((360 / chartData.barangayMonthly.datasets.length) * index);
-        
         return {
           ...dataset,
           backgroundColor: `hsla(${hue}, 70%, 60%, 0.2)`,
+          borderWidth: 2,
+          tension: 0.3,
+          fill: false
+        };
+      });
+    }
+  }
+
+  // Update death barangay monthly data (NEW)
+  if (props.chartData.deathBarangayMonthly) {
+    chartData.deathBarangayMonthly = {
+      labels: props.chartData.deathBarangayMonthly.labels || [],
+      datasets: props.chartData.deathBarangayMonthly.datasets || []
+    };
+        
+    if (chartData.deathBarangayMonthly.datasets) {
+      chartData.deathBarangayMonthly.datasets = chartData.deathBarangayMonthly.datasets.map((dataset, index) => {
+        const hue = Math.floor((360 / chartData.deathBarangayMonthly.datasets.length) * index);
+        return {
+          ...dataset,
+          backgroundColor: `hsla(${hue + 180}, 70%, 50%, 0.2)`, // Different hue range for deaths
+          borderColor: `hsla(${hue + 180}, 70%, 50%, 1)`,
           borderWidth: 2,
           tension: 0.3,
           fill: false
@@ -220,10 +261,10 @@ const initializeChartData = () => {
         label: 'Health Cards Issued',
         data: props.chartData.rhuHealthCard.data || [],
         backgroundColor: [
-          'rgba(16, 185, 129, 0.7)', // Green
-          'rgba(59, 130, 246, 0.7)', // Blue
-          'rgba(245, 158, 11, 0.7)', // Amber
-          'rgba(139, 92, 246, 0.7)'  // Purple
+          'rgba(16, 185, 129, 0.7)',
+          'rgba(59, 130, 246, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
+          'rgba(139, 92, 246, 0.7)'
         ],
         borderColor: [
           'rgb(16, 185, 129)',
@@ -238,13 +279,10 @@ const initializeChartData = () => {
 
   // Update RHU monthly health card data
   if (props.chartData.rhuMonthly) {
-    // Create a default dataset if none exists or if datasets is not an array
     let datasets = [];
-    
-    // Check if datasets exists and is an array
+        
     if (props.chartData.rhuMonthly.datasets && Array.isArray(props.chartData.rhuMonthly.datasets)) {
       datasets = props.chartData.rhuMonthly.datasets.map((dataset, index) => {
-        // Generate different colors for each RHU
         const hue = Math.floor((360 / props.chartData.rhuMonthly.datasets.length) * index);
         return {
           ...dataset,
@@ -255,16 +293,13 @@ const initializeChartData = () => {
         };
       });
     } else {
-      // Create an empty dataset if none exists
       datasets = [];
     }
-
     chartData.rhuMonthly = {
       labels: props.chartData.rhuMonthly.labels || [],
       datasets: datasets
     };
   } else {
-    // If rhuMonthly doesn't exist, create an empty chart
     chartData.rhuMonthly = {
       labels: [],
       datasets: []
@@ -308,13 +343,13 @@ const initializeChartData = () => {
       }]
     };
   }
-  
-  // Update sanitary monthly data (NEW)
+    
+  // Update sanitary monthly data
   if (props.chartData.sanitaryMonthly) {
     chartData.sanitaryMonthly = props.chartData.sanitaryMonthly;
   }
-  
-  // Update sanitary quarterly data (NEW)
+    
+  // Update sanitary quarterly data
   if (props.chartData.sanitaryQuarterly) {
     chartData.sanitaryQuarterly = props.chartData.sanitaryQuarterly;
   }
@@ -329,25 +364,47 @@ const initializeChartData = () => {
 // Filter barangay monthly data based on selected barangay
 const filterBarangayMonthlyData = () => {
   if (!chartData.barangayMonthly || !chartData.barangayMonthly.datasets) return;
-  
-  if (selectedBarangay.value === 'All') {
-    // Show all barangays (limit to top 10 for better visibility)
-    const allDatasets = [...chartData.barangayMonthly.datasets];
-    const limitedDatasets = allDatasets.slice(0, 10); // Limit to top 10 for readability
     
+  if (selectedBarangay.value === 'All') {
+    const allDatasets = [...chartData.barangayMonthly.datasets];
+    const limitedDatasets = allDatasets.slice(0, 10);
+        
     if (barangayMonthlyChartInstance) {
       barangayMonthlyChartInstance.data.datasets = limitedDatasets;
       barangayMonthlyChartInstance.update();
     }
   } else {
-    // Filter to show only the selected barangay
     const filteredDataset = chartData.barangayMonthly.datasets.filter(dataset => 
       dataset.label === selectedBarangay.value
     );
-    
+        
     if (barangayMonthlyChartInstance) {
       barangayMonthlyChartInstance.data.datasets = filteredDataset;
       barangayMonthlyChartInstance.update();
+    }
+  }
+};
+
+// Filter death barangay monthly data based on selected barangay (NEW)
+const filterDeathBarangayMonthlyData = () => {
+  if (!chartData.deathBarangayMonthly || !chartData.deathBarangayMonthly.datasets) return;
+    
+  if (selectedDeathBarangay.value === 'All') {
+    const allDatasets = [...chartData.deathBarangayMonthly.datasets];
+    const limitedDatasets = allDatasets.slice(0, 10);
+        
+    if (deathBarangayMonthlyChartInstance) {
+      deathBarangayMonthlyChartInstance.data.datasets = limitedDatasets;
+      deathBarangayMonthlyChartInstance.update();
+    }
+  } else {
+    const filteredDataset = chartData.deathBarangayMonthly.datasets.filter(dataset => 
+      dataset.label === selectedDeathBarangay.value
+    );
+        
+    if (deathBarangayMonthlyChartInstance) {
+      deathBarangayMonthlyChartInstance.data.datasets = filteredDataset;
+      deathBarangayMonthlyChartInstance.update();
     }
   }
 };
@@ -357,6 +414,11 @@ watch(selectedBarangay, () => {
   filterBarangayMonthlyData();
 });
 
+// Watch for changes in the selected death barangay (NEW)
+watch(selectedDeathBarangay, () => {
+  filterDeathBarangayMonthlyData();
+});
+
 // Initialize charts
 const initCharts = () => {
   try {
@@ -364,7 +426,7 @@ const initCharts = () => {
     if (healthCardChartInstance) {
       healthCardChartInstance.destroy();
     }
-    
+        
     if (healthCardChart.value) {
       healthCardChartInstance = new Chart(healthCardChart.value, {
         type: 'line',
@@ -393,12 +455,12 @@ const initCharts = () => {
         }
       });
     }
-    
+        
     // Category Chart
     if (categoryChartInstance) {
       categoryChartInstance.destroy();
     }
-    
+        
     if (categoryChart.value) {
       categoryChartInstance = new Chart(categoryChart.value, {
         type: 'doughnut',
@@ -425,12 +487,11 @@ const initCharts = () => {
         }
       });
     }
-    
+        
     // Sanitary Chart - Monthly data
     if (sanitaryChartInstance) {
       sanitaryChartInstance.destroy();
     }
-
     if (sanitaryChart.value) {
       sanitaryChartInstance = new Chart(sanitaryChart.value, {
         type: 'bar',
@@ -464,7 +525,6 @@ const initCharts = () => {
     if (statusChartInstance) {
       statusChartInstance.destroy();
     }
-
     if (statusChart.value) {
       statusChartInstance = new Chart(statusChart.value, {
         type: 'bar',
@@ -498,18 +558,17 @@ const initCharts = () => {
     if (barangayChartInstance) {
       barangayChartInstance.destroy();
     }
-
     if (barangayChart.value) {
       barangayChartInstance = new Chart(barangayChart.value, {
         type: 'bar',
         data: chartData.barangay,
         options: {
-          indexAxis: 'y', // Horizontal bar chart for better display of many barangays
+          indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: false, // Hide legend for this chart
+              display: false,
             },
             title: {
               display: false,
@@ -537,7 +596,6 @@ const initCharts = () => {
     if (rhuHealthCardChartInstance) {
       rhuHealthCardChartInstance.destroy();
     }
-
     if (rhuHealthCardChart.value) {
       rhuHealthCardChartInstance = new Chart(rhuHealthCardChart.value, {
         type: 'bar',
@@ -576,7 +634,6 @@ const initCharts = () => {
     if (rhuMonthlyChartInstance) {
       rhuMonthlyChartInstance.destroy();
     }
-
     if (rhuMonthlyChart.value) {
       rhuMonthlyChartInstance = new Chart(rhuMonthlyChart.value, {
         type: 'line',
@@ -611,14 +668,13 @@ const initCharts = () => {
         }
       });
     }
-    
+        
     // Barangay Monthly Chart
     if (barangayMonthlyChartInstance) {
       barangayMonthlyChartInstance.destroy();
     }
-    
+        
     if (barangayMonthlyChart.value) {
-      // Initially show only top 10 barangays for better readability
       let initialDatasets = [...chartData.barangayMonthly.datasets];
       if (selectedBarangay.value === 'All' && initialDatasets.length > 10) {
         initialDatasets = initialDatasets.slice(0, 10);
@@ -627,7 +683,7 @@ const initCharts = () => {
           dataset.label === selectedBarangay.value
         );
       }
-      
+            
       const chartConfig = {
         type: 'line',
         data: {
@@ -668,8 +724,67 @@ const initCharts = () => {
           }
         }
       };
-      
+            
       barangayMonthlyChartInstance = new Chart(barangayMonthlyChart.value, chartConfig);
+    }
+
+    // Death Barangay Monthly Chart (NEW)
+    if (deathBarangayMonthlyChartInstance) {
+      deathBarangayMonthlyChartInstance.destroy();
+    }
+        
+    if (deathBarangayMonthlyChart.value) {
+      let initialDatasets = [...chartData.deathBarangayMonthly.datasets];
+      if (selectedDeathBarangay.value === 'All' && initialDatasets.length > 10) {
+        initialDatasets = initialDatasets.slice(0, 10);
+      } else if (selectedDeathBarangay.value !== 'All') {
+        initialDatasets = initialDatasets.filter(dataset => 
+          dataset.label === selectedDeathBarangay.value
+        );
+      }
+            
+      const deathChartConfig = {
+        type: 'line',
+        data: {
+          labels: chartData.deathBarangayMonthly.labels,
+          datasets: initialDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              display: true,
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+            },
+            title: {
+              display: false,
+              text: 'DEATH CERTIFICATES ISSUED PER BARANGAY MONTHLY'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'NUMBER OF DEATH CERTIFICATES'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'MONTH'
+              }
+            }
+          }
+        }
+      };
+            
+      deathBarangayMonthlyChartInstance = new Chart(deathBarangayMonthlyChart.value, deathChartConfig);
     }
   } catch (error) {
     console.error('Error initializing charts:', error);
@@ -693,189 +808,199 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Dashboard" />
-
-    <AppLayout :breadcrumbs="breadcrumbs">
-      <div class="flex h-full flex-1 flex-col gap-4 rounded-xl">
-          <div class="w-full py-10">
-    <div class="w-full bg-white rounded-lg shadow-md p-4 md:p-6">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">DASHBOARD OVERVIEW</h1>
-          <p class="text-sm text-gray-500">HEALTH CARDS AND SANITARY PERMITS ANALYTICS</p>
-        </div>
-        <div class="mt-4 md:mt-0 flex items-center gap-3">
-          <select 
-            v-model="yearFilter" 
-            class="px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700"
-          >
-            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
-          </select>
-          <button 
-            class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium shadow-sm bg-primary text-white hover:bg-primary/90"
-            @click="refreshData"
-          >
-            <RefreshCw class="mr-2 h-4 w-4" />
-            REFRESH DATA
-          </button>
-        </div>
-      </div>
-
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <div class="flex items-center">
-            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-              <CreditCard class="h-6 w-6" />
+  <Head title="Dashboard" />
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="flex h-full flex-1 flex-col gap-4 rounded-xl">
+      <div class="w-full py-10">
+        <div class="w-full bg-white rounded-lg shadow-md p-4 md:p-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">DASHBOARD OVERVIEW</h1>
+              <p class="text-sm text-gray-500">HEALTH CARDS, SANITARY PERMITS AND DEATH CERTIFICATES ANALYTICS</p>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">TOTAL HEALTH CARDS</p>
-              <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalHealthCards }}</h3>
-            </div>
-          </div>
-          <div class="mt-4 flex items-center">
-           
-          </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <div class="flex items-center">
-            <div class="p-3 rounded-full bg-green-100 text-green-600">
-              <ClipboardCheck class="h-6 w-6" />
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">ACTIVE PERMITS</p>
-              <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalSanitaryCount }}</h3>
-            </div>
-          </div>
-          <div class="mt-4 flex items-center">
-          
-          </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <div class="flex items-center">
-            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
-              <FileText class="h-6 w-6" />
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">NEW APPLICATIONS</p>
-              <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalSanitaryCounts }}</h3>
-            </div>
-          </div>
-          <div class="mt-4 flex items-center">
-           
-          </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <div class="flex items-center">
-            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-              <RefreshCw class="h-6 w-6" />
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">PENDING RENEWALS</p>
-              <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.pendingRenewals }}</h3>
-            </div>
-          </div>
-          <div class="mt-4 flex items-center">
-          
-          </div>
-        </div>
-      </div>
-
-      <!-- NEW: Barangay Monthly Chart (Full Width) -->
-      <div class="mb-8">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">HEALTH CARDS ISSUED PER BARANGAY MONTHLY</h3>
-            <div class="mt-2 md:mt-0">
+            <div class="mt-4 md:mt-0 flex items-center gap-3">
               <select 
-                v-model="selectedBarangay" 
-                class="px-3 py-1 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700"
+                v-model="yearFilter"
+                class="px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700"
               >
-                <option v-for="barangay in barangayList" :key="barangay" :value="barangay">
-                  {{ barangay }}
-                </option>
+                <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
               </select>
+              <button 
+                class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium shadow-sm bg-primary text-white hover:bg-primary/90"
+                @click="refreshData"
+              >
+                <RefreshCw class="mr-2 h-4 w-4" />
+                REFRESH DATA
+              </button>
             </div>
           </div>
-          <div class="h-80">
-            <canvas ref="barangayMonthlyChart"></canvas>
-          </div>
-        </div>
-      </div>
 
-      <!-- Barangay Chart (Full Width) -->
-      <div class="mb-8">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER BARANGAY</h3>
-          <div class="h-[600px]"> <!-- Taller height for the 45 barangays -->
-            <canvas ref="barangayChart"></canvas>
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                  <CreditCard class="h-6 w-6" />
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm font-medium text-gray-500">TOTAL HEALTH CARDS</p>
+                  <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalHealthCards }}</h3>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                  <ClipboardCheck class="h-6 w-6" />
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm font-medium text-gray-500">ACTIVE PERMITS</p>
+                  <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalSanitaryCount }}</h3>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                  <FileText class="h-6 w-6" />
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm font-medium text-gray-500">NEW APPLICATIONS</p>
+                  <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalSanitaryCounts }}</h3>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                  <RefreshCw class="h-6 w-6" />
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm font-medium text-gray-500">PENDING RENEWALS</p>
+                  <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.pendingRenewals }}</h3>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div class="flex items-center">
+                <div class="p-3 rounded-full bg-red-100 text-red-600">
+                  <Skull class="h-6 w-6" />
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm font-medium text-gray-500">TOTAL DEATH CERTIFICATES</p>
+                  <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalDeath }}</h3>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- RHU Health Card Chart (Full Width) -->
-      <div class="mb-8">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER RHU</h3>
-          <div class="h-80">
-            <canvas ref="rhuHealthCardChart"></canvas>
+          <!-- NEW: Death Barangay Monthly Chart (Full Width) -->
+          <div class="mb-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">DEATH CERTIFICATES ISSUED PER BARANGAY MONTHLY</h3>
+                <div class="mt-2 md:mt-0">
+                  <select
+                    v-model="selectedDeathBarangay"
+                    class="px-3 py-1 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700"
+                  >
+                    <option v-for="barangay in deathBarangayList" :key="barangay" :value="barangay">
+                      {{ barangay }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="h-80">
+                <canvas ref="deathBarangayMonthlyChart"></canvas>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- RHU Monthly Chart (Full Width) -->
-      <div class="mb-8">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER RHU MONTHLY</h3>
-          <div class="h-80">
-            <canvas ref="rhuMonthlyChart"></canvas>
+          <!-- Barangay Monthly Chart (Full Width) -->
+          <div class="mb-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">HEALTH CARDS ISSUED PER BARANGAY MONTHLY</h3>
+                <div class="mt-2 md:mt-0">
+                  <select
+                    v-model="selectedBarangay"
+                    class="px-3 py-1 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700"
+                  >
+                    <option v-for="barangay in barangayList" :key="barangay" :value="barangay">
+                      {{ barangay }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="h-80">
+                <canvas ref="barangayMonthlyChart"></canvas>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Charts Row 1 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER MONTH</h3>
-          <div class="h-80">
-            <canvas ref="healthCardChart"></canvas>
+          <!-- Barangay Chart (Full Width) -->
+          <div class="mb-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER BARANGAY</h3>
+              <div class="h-[600px]">
+                <canvas ref="barangayChart"></canvas>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS BY CATEGORY</h3>
-          <div class="h-80">
-            <canvas ref="categoryChart"></canvas>
+          <!-- RHU Health Card Chart (Full Width) -->
+          <div class="mb-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER RHU</h3>
+              <div class="h-80">
+                <canvas ref="rhuHealthCardChart"></canvas>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Charts Row 2 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">SANITARY PERMITS - NEW VS RENEWALS</h3>
-          <div class="h-80">
-            <canvas ref="sanitaryChart"></canvas>
+          <!-- RHU Monthly Chart (Full Width) -->
+          <div class="mb-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER RHU MONTHLY</h3>
+              <div class="h-80">
+                <canvas ref="rhuMonthlyChart"></canvas>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">SANITARY PERMITS - QUARTERLY (NEW VS RENEWALS)</h3>
-          <div class="h-80">
-            <canvas ref="statusChart"></canvas>
+          <!-- Charts Row 1 -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER MONTH</h3>
+              <div class="h-80">
+                <canvas ref="healthCardChart"></canvas>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS BY CATEGORY</h3>
+              <div class="h-80">
+                <canvas ref="categoryChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2 -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">SANITARY PERMITS - NEW VS RENEWALS</h3>
+              <div class="h-80">
+                <canvas ref="sanitaryChart"></canvas>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">SANITARY PERMITS - QUARTERLY (NEW VS RENEWALS)</h3>
+              <div class="h-80">
+                <canvas ref="statusChart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-            
-        </div>
-
-      
-    </AppLayout>
+  </AppLayout>
 </template>
-
-

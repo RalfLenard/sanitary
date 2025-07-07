@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use app\Models\User;
 use App\Models\HealthCard;
 use Inertia\Inertia;
+use App\Models\Death;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -173,6 +174,38 @@ class HomeController extends Controller
                 ->count();
 
 
+             // Death Certificate Data
+            $totalDeath = Death::whereNotNull('created_at')->count();
+
+            $deathMonthlyRaw = Death::select(
+                DB::raw("residence as barangay"),
+                DB::raw("MONTH(created_at) as month"),
+                DB::raw("DATE_FORMAT(created_at, '%M') as month_name"),
+                DB::raw("COUNT(*) as count")
+            )
+                ->whereNotNull('residence')
+                ->where('residence', '!=', '')
+                ->groupBy('barangay', 'month', 'month_name')
+                ->orderBy('month')
+                ->get();
+
+            $deathBarangays = $deathMonthlyRaw->pluck('barangay')->unique()->filter()->values();
+
+            $deathBarangayMonthlyDatasets = $deathBarangays->map(function ($barangay) use ($deathMonthlyRaw, $months) {
+                $data = $months->map(function ($month) use ($barangay, $deathMonthlyRaw) {
+                    return $deathMonthlyRaw
+                        ->firstWhere(fn($item) => $item->barangay === $barangay && $item->month_name === $month)?->count ?? 0;
+                });
+
+                return [
+                    'label' => $barangay,
+                    'data' => $data->values(),
+                    'fill' => false,
+                    'borderColor' => '#' . substr(md5('death' . $barangay), 0, 6),
+                ];
+            })->values();
+
+
             // Return to Inertia
             return Inertia::render('Dashboard', [
                 'chartData' => [
@@ -199,6 +232,10 @@ class HomeController extends Controller
                     'barangayMonthly' => [
                         'labels' => $months,
                         'datasets' => $barangayMonthlyDatasets,
+                    ],
+                    'deathBarangayMonthly' => [
+                        'labels' => $months,
+                        'datasets' => $deathBarangayMonthlyDatasets,
                     ],
                     'sanitaryMonthly' => [
                         'labels' => ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
@@ -242,6 +279,7 @@ class HomeController extends Controller
                 'availableYears' => $availableYears,
                 'totalSanitaryCount' => $totalSanitaryCount,
                 'totalSanitaryCounts' => $totalSanitaryCounts,
+                'totalDeath' => $totalDeath,
             ]);
         }else{
             return Inertia::render('Guest');

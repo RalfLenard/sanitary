@@ -5,69 +5,75 @@
     <div class="flex min-h-screen w-full flex-col bg-gray-50">
       <!-- Main Content -->
       <main class="flex flex-1 flex-col gap-4 p-2 md:gap-8 md:p-8">
-        <!-- Tabs -->
-     
-          <!-- Tab Content -->
-          <div class="p-4">
-            <div v-if="activeTab === 'all'">
-              <div class="rounded-lg">
-                <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-medium leading-6 text-gray-900">All Death Certificates</h3>
-                    <p class="mt-1 text-sm text-gray-500">Manage and view all death certificates in the system.</p>
+        <!-- Tab Content -->
+        <div class="p-4">
+          <div v-if="activeTab === 'all'">
+            <div class="rounded-lg">
+              <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-medium leading-6 text-gray-900">All Death Certificates</h3>
+                  <p class="mt-1 text-sm text-gray-500">Manage and view all death certificates in the system.</p>
+                </div>
+
+                <button @click="openModal"
+                  class="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="mr-2 h-4 w-4">
+                    <path d="M5 12h14" />
+                    <path d="M12 5v14" />
+                  </svg>
+                  New Certificate
+                </button>
+              </div>
+              <div class="px-4 py-5 sm:p-6">
+                <!-- Certificate Table -->
+                <div class="w-full">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 gap-4">
+                    <div class="relative">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                      </svg>
+                      <form @submit.prevent="performSearch">
+                        <input type="text" placeholder="Search by name or cause..." v-model="search"
+                          @input="debounceSearch"
+                          class="w-full sm:max-w-sm rounded-md border border-gray-300 pl-10 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors duration-200" />
+                      </form>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      Total: <span class="font-medium">{{ deaths?.total || 0 }}</span> certificates
+                    </div>
                   </div>
 
-                  <button @click="openModal"
-                    class="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="mr-2 h-4 w-4">
-                      <path d="M5 12h14" />
-                      <path d="M12 5v14" />
-                    </svg>
-                    New Certificate
-                  </button>
-                </div>
-                <div class="px-4 py-5 sm:p-6">
-                  <!-- Certificate Table -->
-                  <div class="w-full">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 gap-4">
-                      <div class="relative">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500">
-                          <circle cx="11" cy="11" r="8" />
-                          <path d="m21 21-4.3-4.3" />
-                        </svg>
-                        <form @submit.prevent="performSearch">
-                          <input type="text" placeholder="Search by name or cause..." v-model="search"
-                            class="w-full sm:max-w-sm rounded-md border border-gray-300 pl-10 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors duration-200" />
-                        </form>
-                      </div>
+                  <div v-if="!deaths?.data || deaths.data.length === 0"
+                    class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="rounded-full bg-gray-100 p-3 mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="h-6 w-6 text-gray-500">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <path d="M12 18v-6" />
+                        <path d="M8 15h8" />
+                      </svg>
                     </div>
+                    <h3 class="text-lg font-medium text-gray-900">
+                      {{ search ? 'No certificates found' : 'No certificates available' }}
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                      {{ search ? 'Try adjusting your search to find what you\'re looking for.' : 'Get started by creating your first death certificate.' }}
+                    </p>
+                    <button v-if="search" @click="clearSearch"
+                      class="mt-4 inline-flex items-center justify-center rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 transition-colors duration-200 hover:bg-blue-100">
+                      Clear search
+                    </button>
+                  </div>
 
-                    <div v-if="deaths.data.length === 0"
-                      class="flex flex-col items-center justify-center py-12 text-center">
-                      <div class="rounded-full bg-gray-100 p-3 mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                          class="h-6 w-6 text-gray-500">
-                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                          <polyline points="14 2 14 8 20 8" />
-                          <path d="M12 18v-6" />
-                          <path d="M8 15h8" />
-                        </svg>
-                      </div>
-                      <h3 class="text-lg font-medium text-gray-900">No certificates found</h3>
-                      <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter to find what you're
-                        looking for.</p>
-                      <button @click="clearSearch"
-                        class="mt-4 inline-flex items-center justify-center rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 transition-colors duration-200 hover:bg-blue-100">
-                        Clear search
-                      </button>
-                    </div>
-
-                    <div v-else class="rounded-md border overflow-hidden">
+                  <div v-else class="rounded-md border overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
                       <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                           <tr>
@@ -109,7 +115,7 @@
                             </th>
                           </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200"  style="text-transform: uppercase;">
+                        <tbody class="bg-white divide-y divide-gray-200" style="text-transform: uppercase;">
                           <tr v-for="(death, index) in deaths.data" :key="death.id"
                             :class="[index % 2 === 0 ? 'bg-white' : 'bg-gray-50', 'hover:bg-blue-50 transition-colors duration-150']">
                             <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800">
@@ -125,9 +131,9 @@
                               {{ death.place_of_death }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <div class="relative inline-block text-left">
-                                <button @click="toggleDropdown(death.id)"
-                                  class="h-8 w-8 p-0 rounded-full hover:bg-gray-100 focus:outline-none transition-colors duration-150">
+                              <div class="relative inline-block text-left" :ref="`dropdown-${death.id}`">
+                                <button @click.stop="toggleDropdown(death.id)"
+                                  class="h-8 w-8 p-0 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="h-4 w-4 mx-auto">
@@ -136,67 +142,77 @@
                                     <circle cx="12" cy="19" r="1" />
                                   </svg>
                                 </button>
-                                <div v-if="activeDropdown === death.id"
-                                  class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                                  style="z-index: 9999;">
-                                  <div class="py-1">
-                                    <div class="px-4 py-2 text-sm text-gray-700 font-medium">Actions</div>
-                                    <button @click="viewDetails(death)"
-                                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                        class="mr-2 h-4 w-4 text-gray-500">
-                                        <path
-                                          d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                                        <polyline points="14 2 14 8 20 8" />
-                                        <line x1="16" y1="13" x2="8" y2="13" />
-                                        <line x1="16" y1="17" x2="8" y2="17" />
-                                        <line x1="10" y1="9" x2="8" y2="9" />
-                                      </svg>
-                                      View Details
-                                    </button>
-                                    <button @click="editCertificate(death)"
-                                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                        class="mr-2 h-4 w-4 text-gray-500">
-                                        <path d="M12 20h9" />
-                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                      </svg>
-                                      Edit Certificate
-                                    </button>
-                                    <button @click="printCertificate(death.id)"
-                                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                        class="mr-2 h-4 w-4 text-gray-500">
-                                        <polyline points="6 9 6 2 18 2 18 9" />
-                                        <path
-                                          d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                                        <rect x="6" y="14" width="12" height="8" />
-                                      </svg>
-                                      Print Certificate
-                                    </button>
-                                    <div class="border-t border-gray-100"></div>
-                                    <button @click="confirmDelete(death.id)"
-                                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors duration-150">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                        class="mr-2 h-4 w-4 text-red-500">
-                                        <path d="M3 6h18" />
-                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                        <line x1="10" y1="11" x2="10" y2="17" />
-                                        <line x1="14" y1="11" x2="14" y2="17" />
-                                      </svg>
-                                      Delete
-                                    </button>
+                                
+                                <!-- Dropdown Menu with improved positioning and z-index -->
+                                <transition
+                                  enter-active-class="transition ease-out duration-100"
+                                  enter-from-class="transform opacity-0 scale-95"
+                                  enter-to-class="transform opacity-100 scale-100"
+                                  leave-active-class="transition ease-in duration-75"
+                                  leave-from-class="transform opacity-100 scale-100"
+                                  leave-to-class="transform opacity-0 scale-95">
+                                  <div v-if="activeDropdown === death.id" @click.stop
+                                    class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                    style="z-index: 1000;">
+                                    <div class="py-1">
+                                      <div class="px-4 py-2 text-sm text-gray-700 font-medium border-b border-gray-100">Actions</div>
+                                      <button @click="viewDetails(death)"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                          stroke-linecap="round" stroke-linejoin="round"
+                                          class="mr-2 h-4 w-4 text-gray-500">
+                                          <path
+                                            d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                          <polyline points="14 2 14 8 20 8" />
+                                          <line x1="16" y1="13" x2="8" y2="13" />
+                                          <line x1="16" y1="17" x2="8" y2="17" />
+                                          <line x1="10" y1="9" x2="8" y2="9" />
+                                        </svg>
+                                        View Details
+                                      </button>
+                                      <button @click="editCertificate(death)"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                          stroke-linecap="round" stroke-linejoin="round"
+                                          class="mr-2 h-4 w-4 text-gray-500">
+                                          <path d="M12 20h9" />
+                                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        </svg>
+                                        Edit Certificate
+                                      </button>
+                                      <button @click="printCertificate(death.id)"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                          stroke-linecap="round" stroke-linejoin="round"
+                                          class="mr-2 h-4 w-4 text-gray-500">
+                                          <polyline points="6 9 6 2 18 2 18 9" />
+                                          <path
+                                            d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                          <rect x="6" y="14" width="12" height="8" />
+                                        </svg>
+                                        Print Certificate
+                                      </button>
+                                      <div class="border-t border-gray-100"></div>
+                                      <button @click="confirmDelete(death.id)"
+                                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors duration-150">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                          stroke-linecap="round" stroke-linejoin="round"
+                                          class="mr-2 h-4 w-4 text-red-500">
+                                          <path d="M3 6h18" />
+                                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                          <line x1="10" y1="11" x2="10" y2="17" />
+                                          <line x1="14" y1="11" x2="14" y2="17" />
+                                        </svg>
+                                        Delete
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
+                                </transition>
                               </div>
                             </td>
                           </tr>
@@ -205,35 +221,62 @@
                     </div>
                     
                     <!-- Pagination -->
-                    <div class="flex items-center justify-between py-4">
-                      <div class="text-sm text-gray-500">
-                        Showing <span class="font-medium">{{ deaths.from || 0 }}</span> to 
-                        <span class="font-medium">{{ deaths.to || 0 }}</span> of 
-                        <span class="font-medium">{{ deaths.total || 0 }}</span> certificates
-                      </div>
-                      <div class="flex items-center space-x-2">
+                    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                      <div class="flex-1 flex justify-between sm:hidden">
                         <button 
                           @click="goToPage(deaths.current_page - 1)" 
                           :disabled="!deaths.prev_page_url"
-                          class="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="h-4 w-4 mr-1">
-                            <path d="m15 18-6-6 6-6" />
-                          </svg>
+                          class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                           Previous
                         </button>
                         <button 
                           @click="goToPage(deaths.current_page + 1)" 
                           :disabled="!deaths.next_page_url"
-                          class="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                          class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                           Next
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="h-4 w-4 ml-1">
-                            <path d="m9 18 6-6-6-6" />
-                          </svg>
                         </button>
+                      </div>
+                      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                          <p class="text-sm text-gray-700">
+                            Showing
+                            <span class="font-medium">{{ deaths.from || 0 }}</span>
+                            to
+                            <span class="font-medium">{{ deaths.to || 0 }}</span>
+                            of
+                            <span class="font-medium">{{ deaths.total || 0 }}</span>
+                            results
+                          </p>
+                        </div>
+                        <div>
+                          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <button 
+                              @click="goToPage(deaths.current_page - 1)" 
+                              :disabled="!deaths.prev_page_url"
+                              class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                              <span class="sr-only">Previous</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="h-5 w-5">
+                                <path d="m15 18-6-6 6-6" />
+                              </svg>
+                            </button>
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                              {{ deaths.current_page }} of {{ deaths.last_page }}
+                            </span>
+                            <button 
+                              @click="goToPage(deaths.current_page + 1)" 
+                              :disabled="!deaths.next_page_url"
+                              class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                              <span class="sr-only">Next</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="h-5 w-5">
+                                <path d="m9 18 6-6-6-6" />
+                              </svg>
+                            </button>
+                          </nav>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -241,7 +284,7 @@
               </div>
             </div>
           </div>
-      
+        </div>
       </main>
 
       <!-- Certificate Details Modal -->
@@ -333,7 +376,9 @@
                     class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor"
                       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-red-600">
-                      <path d="M14 2L6 10M6 2L14 10" />
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                     </svg>
                   </div>
                   <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
@@ -374,8 +419,6 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
-
-
 import {
   FileTextIcon,
   CalendarIcon,
@@ -410,6 +453,7 @@ const activeDropdown = ref(null);
 const search = ref(props.search || '');
 const deathToDeleteId = ref(null);
 const isDeleteModalOpen = ref(false);
+const searchTimeout = ref(null);
 
 // Modal functions
 const openModal = () => {
@@ -427,13 +471,23 @@ const closeModal = () => {
   }, 300);
 };
 
-// Search and pagination functions
+// Search and pagination functions with debouncing
+const debounceSearch = () => {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+  searchTimeout.value = setTimeout(() => {
+    performSearch();
+  }, 500); // 500ms delay
+};
+
 const performSearch = () => {
   router.get(route('death.index'), {
     search: search.value
   }, {
     preserveState: true,
-    replace: true
+    replace: true,
+    only: ['deaths'] // Only reload the deaths data
   });
 };
 
@@ -443,12 +497,17 @@ const clearSearch = () => {
 };
 
 const goToPage = (page) => {
+  if (page < 1 || (props.deaths?.last_page && page > props.deaths.last_page)) {
+    return;
+  }
+  
   router.get(route('death.index'), {
     search: search.value,
     page: page
   }, {
     preserveState: true,
-    replace: true
+    replace: true,
+    only: ['deaths']
   });
 };
 
@@ -460,6 +519,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
 });
 
 // Age calculation function
@@ -574,7 +636,8 @@ const toggleDropdown = (id) => {
 };
 
 const handleClickOutside = (event) => {
-  if (activeDropdown.value !== null && !event.target.closest('.relative')) {
+  // Check if the click is outside any dropdown
+  if (activeDropdown.value !== null && !event.target.closest('[class*="dropdown-"]')) {
     activeDropdown.value = null;
   }
 };
@@ -593,6 +656,8 @@ const editCertificate = (certificate) => {
 };
 
 const printCertificate = (deathId) => {
+  activeDropdown.value = null;
+  
   if (!window.Laravel?.routes?.death_generate_pdf) {
     console.error("Laravel routes not defined.");
     return;
@@ -606,6 +671,7 @@ const printCertificate = (deathId) => {
 const confirmDelete = (id) => {
   deathToDeleteId.value = id;
   isDeleteModalOpen.value = true;
+  activeDropdown.value = null;
 };
 
 // Function to delete death record using Inertia
@@ -624,3 +690,11 @@ const deleteDeath = () => {
 };
 </script>
 
+<style scoped>
+.modal-enter-active, .modal-leave-active {
+  transition: opacity 0.3s;
+}
+.modal-enter-from, .modal-leave-to {
+  opacity: 0;
+}
+</style>

@@ -592,6 +592,7 @@
                                             <option value="AARON JAY C. GONZALES">AARON JAY C. GONZALES</option>
                                             <option value="GERALD B. CASTRO">GERALD B. CASTRO</option>
                                             <option value="HEIDY D. PADERE">HEIDY D. PADERE</option>
+                                            <option value="MICHAEL CHRISTIAN D. MUÑOZ">MICHAEL CHRISTIAN D. MUÑOZ</option>
                                             <option value="OTHERS">OTHERS</option>
                                         </select>
 

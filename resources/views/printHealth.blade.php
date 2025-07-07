@@ -197,11 +197,11 @@
     }
 
     .sir-g {
-            width: 70px;
-            height: 70px;
+            width: 100px;
+            height: 100px;
             position: absolute; /* Position the image absolutely */
-            top: -40px; /* Adjust as needed */
-        left: 150px; /* Adjust as needed */
+            top: -60px; /* Adjust as needed */
+        left: 130px; /* Adjust as needed */
         z-index: 1; /* Puts image behind the text */
       
     }
@@ -212,6 +212,21 @@
             position: absolute; /* Position the image absolutely */
             top: -45px; /* Adjust as needed */
         left: 120px; /* Adjust as needed */
+        z-index: 1; /* Puts image behind the text */
+         /* filter: contrast(300%);
+        filter: drop-shadow(1px 1px 0px black)  */
+            /* drop-shadow(-1px -1px 0px black) */
+            /* drop-shadow(1px -1px 0px black) */
+            /* drop-shadow(-1px 1px 0px black); */
+      
+    }
+
+    .emc {
+            width: 135px;
+            height: 90px;
+            position: absolute; /* Position the image absolutely */
+            top: -50px; /* Adjust as needed */
+        left: 110px; /* Adjust as needed */
         z-index: 1; /* Puts image behind the text */
          /* filter: contrast(300%);
         filter: drop-shadow(1px 1px 0px black)  */
@@ -299,8 +314,11 @@
                             <img class="sir-a" src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/A-sig.png'))) }}" alt="Signature">
                         @elseif(Str::lower($health->inspector_name) === 'gerald b. castro')
                             <img class="sir-rald" src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/sir-rald.png'))) }}" alt="Sir G">
-                        @else
+                        @elseif(Str::lower($health->inspector_name) === 'michael christian d. muñoz')
+                            <img class="emc" src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/emc.png'))) }}" alt="Sir G">
+                        @elseif(Str::lower($health->inspector_name) === 'gregorio b. arceo')
                             <img class="sir-g" src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/sir-g.png'))) }}" alt="Sir G">
+
                         @endif
 
 
