@@ -156,33 +156,15 @@ class DashboardController extends Controller
     // Death Certificate Data
     $totalDeath = Death::whereNotNull('created_at')->count();
 
-    $deathMonthlyRaw = Death::select(
-        DB::raw("residence as barangay"),
-        DB::raw("MONTH(created_at) as month"),
-        DB::raw("DATE_FORMAT(created_at, '%M') as month_name"),
-        DB::raw("COUNT(*) as count")
-    )
-        ->whereNotNull('residence')
-        ->where('residence', '!=', '')
-        ->groupBy('barangay', 'month', 'month_name')
-        ->orderBy('month')
-        ->get();
-
-    $deathBarangays = $deathMonthlyRaw->pluck('barangay')->unique()->filter()->values();
-
-    $deathBarangayMonthlyDatasets = $deathBarangays->map(function ($barangay) use ($deathMonthlyRaw, $months) {
-        $data = $months->map(function ($month) use ($barangay, $deathMonthlyRaw) {
-            return $deathMonthlyRaw
-                ->firstWhere(fn($item) => $item->barangay === $barangay && $item->month_name === $month)?->count ?? 0;
-        });
-
-        return [
-            'label' => $barangay,
-            'data' => $data->values(),
-            'fill' => false,
-            'borderColor' => '#' . substr(md5('death' . $barangay), 0, 6),
-        ];
-    })->values();
+   // Group by Month using created_at
+   $deathMonthlyData = Death::select(
+    DB::raw("DATE_FORMAT(created_at, '%M') as month_name"),
+    DB::raw("MONTH(created_at) as month_number"),
+    DB::raw("COUNT(*) as count")
+)
+    ->groupBy('month_name', 'month_number')
+    ->orderBy('month_number')
+    ->get();
 
     // Return to Inertia
     return Inertia::render('Dashboard', [
@@ -249,9 +231,9 @@ class DashboardController extends Controller
                     ]
                 ],
             ],
-            'deathBarangayMonthly' => [
-                'labels' => $months,
-                'datasets' => $deathBarangayMonthlyDatasets,
+            'deathCert' => [
+                'labels' => $deathMonthlyData->pluck('month_name')->values(),
+                'data' => $deathMonthlyData->pluck('count')->values(),
             ],
         ],
         'availableYears' => $availableYears,

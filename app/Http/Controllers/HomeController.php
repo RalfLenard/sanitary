@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Sanitary;
 use Illuminate\Http\Request;
 use app\Models\User;
 use App\Models\HealthCard;
@@ -9,6 +10,7 @@ use Inertia\Inertia;
 use App\Models\Death;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use phpDocumentor\Reflection\PseudoTypes\True_;
 
 
 class HomeController extends Controller
@@ -17,10 +19,9 @@ class HomeController extends Controller
     {
         $user = Auth::user();
 
-       if ($user && in_array($user->usertype, ['admin', 'staff']))
-        {
+        if ($user && in_array($user->usertype, ['admin', 'staff'])) {
 
-             $barangayData = HealthCard::select('barangay')
+            $barangayData = HealthCard::select('barangay')
                 ->groupBy('barangay')
                 ->where('barangay', '!=', '')
                 ->selectRaw('barangay, COUNT(*) as count')
@@ -127,29 +128,34 @@ class HomeController extends Controller
             })->values();
 
             // Sanitary Data (Monthly)
+            // Sanitary Data (Monthly using renewed_at)
             $monthlySanitaryData = DB::table('sanitary')
-                ->selectRaw("MONTH(created_at) as month, status, COUNT(*) as count")
-                ->whereIn('status', ['New', 'Renewed'])
-                ->groupBy('month', 'status')
+                ->selectRaw("MONTH(renewed_at) as month, status, COUNT(*) as count")
+                ->whereNotNull('renewed_at') // Use renewed_at as the reference date
+                ->whereIn('status', ['new', 'renewed'])
+                ->groupBy(DB::raw("MONTH(renewed_at)"), 'status')
                 ->orderBy('month')
                 ->get();
 
             // Monthly arrays for New and Renewed Permits
             $sanitaryNewPerMonth = collect(range(1, 12))->map(function ($m) use ($monthlySanitaryData) {
                 return $monthlySanitaryData
-                    ->firstWhere(fn($row) => $row->month == $m && $row->status === 'new')?->count ?? 0;
+                    ->filter(fn($row) => $row->month == $m && $row->status === 'new')
+                    ->sum('count');
             });
 
             $sanitaryRenewedPerMonth = collect(range(1, 12))->map(function ($m) use ($monthlySanitaryData) {
                 return $monthlySanitaryData
-                    ->firstWhere(fn($row) => $row->month == $m && $row->status === 'renewed')?->count ?? 0;
+                    ->filter(fn($row) => $row->month == $m && $row->status === 'renewed')
+                    ->sum('count');
             });
 
-            // Sanitary Data (Quarterly) based on created_at
+            // Sanitary Data (Quarterly using renewed_at)
             $quarterlySanitaryData = DB::table('sanitary')
-                ->selectRaw("QUARTER(created_at) as quarter, status, COUNT(*) as count")
+                ->selectRaw("QUARTER(renewed_at) as quarter, status, COUNT(*) as count")
+                ->whereNotNull('renewed_at')
                 ->whereIn('status', ['new', 'renewed'])
-                ->groupBy(DB::raw("QUARTER(created_at)"), 'status')  // Grouping by QUARTER of the 'created_at' field and 'status'
+                ->groupBy(DB::raw("QUARTER(renewed_at)"), 'status')
                 ->orderBy('quarter')
                 ->get();
 
@@ -159,51 +165,64 @@ class HomeController extends Controller
             // Build 4-quarter arrays for New and Renewed Permits
             $sanitaryNewPerQuarter = collect(range(1, 4))->map(function ($q) use ($quarterlySanitaryData) {
                 return $quarterlySanitaryData
-                    ->firstWhere(fn($row) => $row->quarter == $q && $row->status === 'new')?->count ?? 0;
+                    ->filter(fn($row) => $row->quarter == $q && $row->status === 'new')
+                    ->sum('count');
             });
 
             $sanitaryRenewedPerQuarter = collect(range(1, 4))->map(function ($q) use ($quarterlySanitaryData) {
                 return $quarterlySanitaryData
-                    ->firstWhere(fn($row) => $row->quarter == $q && $row->status === 'renewed')?->count ?? 0;
+                    ->filter(fn($row) => $row->quarter == $q && $row->status === 'renewed')
+                    ->sum('count');
             });
+
+
 
             $totalSanitaryCount = DB::table('sanitary')->count();
 
             $totalSanitaryCounts = DB::table('sanitary')
-                ->where('status','new')
+                ->where('status', 'new')
                 ->count();
 
 
-             // Death Certificate Data
+            // Death Certificate Data
             $totalDeath = Death::whereNotNull('created_at')->count();
 
-            $deathMonthlyRaw = Death::select(
-                DB::raw("residence as barangay"),
-                DB::raw("MONTH(created_at) as month"),
+            $deathMonthlyData = Death::select(
                 DB::raw("DATE_FORMAT(created_at, '%M') as month_name"),
+                DB::raw("MONTH(created_at) as month_number"),
                 DB::raw("COUNT(*) as count")
             )
-                ->whereNotNull('residence')
-                ->where('residence', '!=', '')
-                ->groupBy('barangay', 'month', 'month_name')
-                ->orderBy('month')
+                ->groupBy('month_name', 'month_number')
+                ->orderBy('month_number')
                 ->get();
 
-            $deathBarangays = $deathMonthlyRaw->pluck('barangay')->unique()->filter()->values();
 
-            $deathBarangayMonthlyDatasets = $deathBarangays->map(function ($barangay) use ($deathMonthlyRaw, $months) {
-                $data = $months->map(function ($month) use ($barangay, $deathMonthlyRaw) {
-                    return $deathMonthlyRaw
-                        ->firstWhere(fn($item) => $item->barangay === $barangay && $item->month_name === $month)?->count ?? 0;
-                });
+            // permit total
+            $totalPermitPrinted = Sanitary::where('confirmed', True)->count();
 
-                return [
-                    'label' => $barangay,
-                    'data' => $data->values(),
-                    'fill' => false,
-                    'borderColor' => '#' . substr(md5('death' . $barangay), 0, 6),
-                ];
-            })->values();
+         
+           // Printed Sanitary Permits Issued Per Month (using created_at)
+            $printedSanitaryMonthlyData = DB::table('sanitary')
+            ->selectRaw("MONTH(renewed_at) as month, DATE_FORMAT(renewed_at, '%M') as month_name, COUNT(*) as count")
+            ->where('confirmed', true)
+            ->whereNotNull('renewed_at')
+            ->groupBy(DB::raw("MONTH(renewed_at)"), DB::raw("DATE_FORMAT(renewed_at, '%M')"))
+            ->orderBy(DB::raw("MONTH(renewed_at)"))
+            ->get();
+
+            // Full 12 months labels (January to December)
+            $printedPermitMonths = collect(range(1, 12))->map(function ($m) {
+                return date('F', mktime(0, 0, 0, $m, 1));
+            });
+
+            // Match counts to month names
+            $printedPermitCounts = $printedPermitMonths->map(function ($month) use ($printedSanitaryMonthlyData) {
+                return $printedSanitaryMonthlyData
+                    ->firstWhere('month_name', $month)?->count ?? 0;
+            });
+
+
+
 
 
             // Return to Inertia
@@ -233,55 +252,61 @@ class HomeController extends Controller
                         'labels' => $months,
                         'datasets' => $barangayMonthlyDatasets,
                     ],
-                    'deathBarangayMonthly' => [
-                        'labels' => $months,
-                        'datasets' => $deathBarangayMonthlyDatasets,
+                    'deathCert' => [
+                        'labels' => $deathMonthlyData->pluck('month_name')->values(),
+                        'data' => $deathMonthlyData->pluck('count')->values(),
                     ],
+                    'printedPermits' => [
+                        'labels' => $printedPermitMonths,
+                        'data' => $printedPermitCounts,
+                    ],
+
                     'sanitaryMonthly' => [
                         'labels' => ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
                         'datasets' => [
-                            [
-                                'label' => 'New Permits',
-                                'data' => $sanitaryNewPerMonth,
-                                'backgroundColor' => 'rgba(16, 185, 129, 0.5)',
-                                'borderColor' => 'rgb(16, 185, 129)',
-                                'borderWidth' => 2,
+                                [
+                                    'label' => 'New Permits',
+                                    'data' => $sanitaryNewPerMonth,
+                                    'backgroundColor' => 'rgba(16, 185, 129, 0.5)',
+                                    'borderColor' => 'rgb(16, 185, 129)',
+                                    'borderWidth' => 2,
+                                ],
+                                [
+                                    'label' => 'Renewed Permits',
+                                    'data' => $sanitaryRenewedPerMonth,
+                                    'backgroundColor' => 'rgba(245, 158, 11, 0.5)',
+                                    'borderColor' => 'rgb(245, 158, 11)',
+                                    'borderWidth' => 2,
+                                ]
                             ],
-                            [
-                                'label' => 'Renewed Permits',
-                                'data' => $sanitaryRenewedPerMonth,
-                                'backgroundColor' => 'rgba(245, 158, 11, 0.5)',
-                                'borderColor' => 'rgb(245, 158, 11)',
-                                'borderWidth' => 2,
-                            ]
-                        ],
                     ],
                     'sanitaryQuarterly' => [
                         'labels' => $quarterLabels,
                         'datasets' => [
-                            [
-                                'label' => 'New Permits',
-                                'data' => $sanitaryNewPerQuarter,
-                                'backgroundColor' => 'rgba(16, 185, 129, 0.5)',
-                                'borderColor' => 'rgb(16, 185, 129)',
-                                'borderWidth' => 2,
+                                [
+                                    'label' => 'New Permits',
+                                    'data' => $sanitaryNewPerQuarter,
+                                    'backgroundColor' => 'rgba(16, 185, 129, 0.5)',
+                                    'borderColor' => 'rgb(16, 185, 129)',
+                                    'borderWidth' => 2,
+                                ],
+                                [
+                                    'label' => 'Renewed Permits',
+                                    'data' => $sanitaryRenewedPerQuarter,
+                                    'backgroundColor' => 'rgba(245, 158, 11, 0.5)',
+                                    'borderColor' => 'rgb(245, 158, 11)',
+                                    'borderWidth' => 2,
+                                ]
                             ],
-                            [
-                                'label' => 'Renewed Permits',
-                                'data' => $sanitaryRenewedPerQuarter,
-                                'backgroundColor' => 'rgba(245, 158, 11, 0.5)',
-                                'borderColor' => 'rgb(245, 158, 11)',
-                                'borderWidth' => 2,
-                            ]
-                        ],
                     ],
                 ],
                 'availableYears' => $availableYears,
                 'totalSanitaryCount' => $totalSanitaryCount,
                 'totalSanitaryCounts' => $totalSanitaryCounts,
                 'totalDeath' => $totalDeath,
+                'totalPermitPrinted' => $totalPermitPrinted,
             ]);
-        }else{
+        } else {
             return Inertia::render('Guest');
         }
     }

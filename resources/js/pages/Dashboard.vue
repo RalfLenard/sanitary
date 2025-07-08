@@ -38,14 +38,14 @@ const props = defineProps({
   availableYears: Array,
   totalSanitaryCount: Number,
   totalSanitaryCounts: Number,
-  totalDeath: Number, // Added totalDeath prop
+  totalDeath: Number,
+  totalPermitPrinted: Number,
 });
 
 // State
 const yearFilter = ref(new Date().getFullYear());
 const availableYears = ref([]);
 const selectedBarangay = ref('All');
-const selectedDeathBarangay = ref('All'); // New filter for death chart
 
 // Summary data - Initialize with default values to prevent undefined errors
 const summaryData = reactive({
@@ -57,7 +57,8 @@ const summaryData = reactive({
   applicationGrowth: 7,
   pendingRenewals: 50,
   renewalGrowth: 2,
-  totalDeath: 0, // Added totalDeath to summary
+  totalDeath: 0,
+  totalPermitPrinted: 0,
 });
 
 watch(
@@ -85,6 +86,14 @@ watch(
   { immediate: true }
 );
 
+watch(
+  () => props.totalPermitPrinted,
+  (newVal) => {
+    summaryData.totalPermitPrinted = newVal;
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   if (props.availableYears) {
     availableYears.value = props.availableYears;
@@ -100,7 +109,8 @@ const barangayChart = ref(null);
 const rhuHealthCardChart = ref(null);
 const rhuMonthlyChart = ref(null);
 const barangayMonthlyChart = ref(null);
-const deathBarangayMonthlyChart = ref(null); // New death chart reference
+const deathCertChart = ref(null); // Changed from deathBarangayMonthlyChart to deathCertChart
+const printedSanitary = ref(null);
 
 // Chart instances
 let healthCardChartInstance = null;
@@ -111,7 +121,8 @@ let barangayChartInstance = null;
 let rhuHealthCardChartInstance = null;
 let rhuMonthlyChartInstance = null;
 let barangayMonthlyChartInstance = null;
-let deathBarangayMonthlyChartInstance = null; // New death chart instance
+let deathCertChartInstance = null; // Changed from deathBarangayMonthlyChartInstance
+let printedSanitaryInstance = null;
 
 // Chart data - now using props from controller
 const chartData = reactive({
@@ -155,7 +166,11 @@ const chartData = reactive({
     labels: [],
     datasets: []
   },
-  deathBarangayMonthly: { // New death chart data
+  deathCert: { // Changed from deathBarangayMonthly to deathCert
+    labels: [],
+    datasets: []
+  },
+  printedPermits: { // Changed from deathBarangayMonthly to deathCert
     labels: [],
     datasets: []
   }
@@ -165,15 +180,6 @@ const chartData = reactive({
 const barangayList = computed(() => {
   if (props.chartData?.barangayMonthly?.datasets) {
     const barangays = props.chartData.barangayMonthly.datasets.map(dataset => dataset.label);
-    return ['All', ...barangays];
-  }
-  return ['All'];
-});
-
-// List of barangays for death filter
-const deathBarangayList = computed(() => {
-  if (props.chartData?.deathBarangayMonthly?.datasets) {
-    const barangays = props.chartData.deathBarangayMonthly.datasets.map(dataset => dataset.label);
     return ['All', ...barangays];
   }
   return ['All'];
@@ -231,27 +237,38 @@ const initializeChartData = () => {
     }
   }
 
-  // Update death barangay monthly data (NEW)
-  if (props.chartData.deathBarangayMonthly) {
-    chartData.deathBarangayMonthly = {
-      labels: props.chartData.deathBarangayMonthly.labels || [],
-      datasets: props.chartData.deathBarangayMonthly.datasets || []
+  // Update death certificate monthly data (CHANGED)
+  if (props.chartData.deathCert) {
+    chartData.deathCert = {
+      labels: props.chartData.deathCert.labels || [],
+      datasets: [{
+        label: 'Death Certificates Issued',
+        data: props.chartData.deathCert.data || [],
+        backgroundColor: 'rgba(239, 68, 68, 0.5)', // Red color for death certificates
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
     };
-        
-    if (chartData.deathBarangayMonthly.datasets) {
-      chartData.deathBarangayMonthly.datasets = chartData.deathBarangayMonthly.datasets.map((dataset, index) => {
-        const hue = Math.floor((360 / chartData.deathBarangayMonthly.datasets.length) * index);
-        return {
-          ...dataset,
-          backgroundColor: `hsla(${hue + 180}, 70%, 50%, 0.2)`, // Different hue range for deaths
-          borderColor: `hsla(${hue + 180}, 70%, 50%, 1)`,
-          borderWidth: 2,
-          tension: 0.3,
-          fill: false
-        };
-      });
-    }
   }
+
+  // printed permits per month
+  if (props.chartData.printedPermits) {
+  chartData.printedPermits = {
+    labels: props.chartData.printedPermits.labels || [],
+    datasets: [{
+      label: 'Sanitary Printed Permit Issued',
+      data: props.chartData.printedPermits.data || [],
+      backgroundColor: 'rgba(59, 130, 246, 0.5)',  // Blue background (Tailwind blue-500)
+      borderColor: 'rgb(59, 130, 246)',            // Blue border
+      borderWidth: 2,
+      tension: 0.3,
+      fill: true
+    }]
+  };
+}
+
 
   // Update RHU health card data
   if (props.chartData.rhuHealthCard) {
@@ -385,38 +402,9 @@ const filterBarangayMonthlyData = () => {
   }
 };
 
-// Filter death barangay monthly data based on selected barangay (NEW)
-const filterDeathBarangayMonthlyData = () => {
-  if (!chartData.deathBarangayMonthly || !chartData.deathBarangayMonthly.datasets) return;
-    
-  if (selectedDeathBarangay.value === 'All') {
-    const allDatasets = [...chartData.deathBarangayMonthly.datasets];
-    const limitedDatasets = allDatasets.slice(0, 10);
-        
-    if (deathBarangayMonthlyChartInstance) {
-      deathBarangayMonthlyChartInstance.data.datasets = limitedDatasets;
-      deathBarangayMonthlyChartInstance.update();
-    }
-  } else {
-    const filteredDataset = chartData.deathBarangayMonthly.datasets.filter(dataset => 
-      dataset.label === selectedDeathBarangay.value
-    );
-        
-    if (deathBarangayMonthlyChartInstance) {
-      deathBarangayMonthlyChartInstance.data.datasets = filteredDataset;
-      deathBarangayMonthlyChartInstance.update();
-    }
-  }
-};
-
 // Watch for changes in the selected barangay
 watch(selectedBarangay, () => {
   filterBarangayMonthlyData();
-});
-
-// Watch for changes in the selected death barangay (NEW)
-watch(selectedDeathBarangay, () => {
-  filterDeathBarangayMonthlyData();
 });
 
 // Initialize charts
@@ -728,27 +716,15 @@ const initCharts = () => {
       barangayMonthlyChartInstance = new Chart(barangayMonthlyChart.value, chartConfig);
     }
 
-    // Death Barangay Monthly Chart (NEW)
-    if (deathBarangayMonthlyChartInstance) {
-      deathBarangayMonthlyChartInstance.destroy();
+    // Death Certificate Monthly Chart (CHANGED)
+    if (deathCertChartInstance) {
+      deathCertChartInstance.destroy();
     }
         
-    if (deathBarangayMonthlyChart.value) {
-      let initialDatasets = [...chartData.deathBarangayMonthly.datasets];
-      if (selectedDeathBarangay.value === 'All' && initialDatasets.length > 10) {
-        initialDatasets = initialDatasets.slice(0, 10);
-      } else if (selectedDeathBarangay.value !== 'All') {
-        initialDatasets = initialDatasets.filter(dataset => 
-          dataset.label === selectedDeathBarangay.value
-        );
-      }
-            
+    if (deathCertChart.value) {
       const deathChartConfig = {
         type: 'line',
-        data: {
-          labels: chartData.deathBarangayMonthly.labels,
-          datasets: initialDatasets
-        },
+        data: chartData.deathCert,
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -763,7 +739,7 @@ const initCharts = () => {
             },
             title: {
               display: false,
-              text: 'DEATH CERTIFICATES ISSUED PER BARANGAY MONTHLY'
+              text: 'DEATH CERTIFICATES ISSUED PER MONTH'
             }
           },
           scales: {
@@ -784,8 +760,56 @@ const initCharts = () => {
         }
       };
             
-      deathBarangayMonthlyChartInstance = new Chart(deathBarangayMonthlyChart.value, deathChartConfig);
+      deathCertChartInstance = new Chart(deathCertChart.value, deathChartConfig);
     }
+
+    // printed permits per month
+    if (printedSanitaryInstance) {
+      printedSanitaryInstance.destroy();
+    }
+        
+    if (printedSanitary.value) {
+      const printedSanitaryConfig = {
+        type: 'line',
+        data: chartData.printedPermits,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              display: true,
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+            },
+            title: {
+              display: false,
+              text: 'SANITARY PRINTED PER MONTH'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'NUMBER OF PRINTED SANITARY'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'MONTH'
+              }
+            }
+          }
+        }
+      };
+            
+      printedSanitaryInstance = new Chart(printedSanitary.value, printedSanitaryConfig);
+    }
+
   } catch (error) {
     console.error('Error initializing charts:', error);
   }
@@ -872,6 +896,17 @@ onMounted(() => {
             </div>
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
               <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                  <FileText class="h-6 w-6" />
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm font-medium text-gray-500">TOTAL PRINTED PERMIT</p>
+                  <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.totalPermitPrinted }}</h3>
+                </div>
+              </div>
+            </div>
+            <!-- <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div class="flex items-center">
                 <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
                   <RefreshCw class="h-6 w-6" />
                 </div>
@@ -880,7 +915,7 @@ onMounted(() => {
                   <h3 class="text-2xl font-bold text-gray-900">{{ summaryData.pendingRenewals }}</h3>
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
               <div class="flex items-center">
                 <div class="p-3 rounded-full bg-red-100 text-red-600">
@@ -894,24 +929,22 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- NEW: Death Barangay Monthly Chart (Full Width) -->
+          <!-- Death Certificates Monthly Chart (CHANGED) -->
           <div class="mb-8">
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-              <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">DEATH CERTIFICATES ISSUED PER BARANGAY MONTHLY</h3>
-                <div class="mt-2 md:mt-0">
-                  <select
-                    v-model="selectedDeathBarangay"
-                    class="px-3 py-1 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700"
-                  >
-                    <option v-for="barangay in deathBarangayList" :key="barangay" :value="barangay">
-                      {{ barangay }}
-                    </option>
-                  </select>
-                </div>
-              </div>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">DEATH CERTIFICATES ISSUED PER MONTH</h3>
               <div class="h-80">
-                <canvas ref="deathBarangayMonthlyChart"></canvas>
+                <canvas ref="deathCertChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+           <!-- Death Certificates Monthly Chart (CHANGED) -->
+           <div class="mb-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">SANITARY PRINTED PER MONTH</h3>
+              <div class="h-80">
+                <canvas ref="printedSanitary"></canvas>
               </div>
             </div>
           </div>
