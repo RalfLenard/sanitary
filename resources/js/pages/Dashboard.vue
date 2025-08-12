@@ -544,6 +544,26 @@ onMounted(() => {
 onUnmounted(() => {
   destroyCharts();
 });
+
+
+const showModal = ref(false);
+
+const form = ref({
+  rhu: '',
+  start_date: '',
+  end_date: '',
+});
+
+const generatePDF = () => {
+  const { rhu, start_date, end_date } = form.value;
+
+  // Open PDF in new tab
+  const url = `/reports/rhu?rhu=${encodeURIComponent(rhu)}&start_date=${start_date}&end_date=${end_date}`;
+  window.open(url, '_blank');
+
+  // Close modal
+  showModal.value = false;
+};
 </script>
 
 <template>
@@ -702,12 +722,28 @@ onUnmounted(() => {
           <!-- RHU Monthly Chart -->
           <div class="mb-8">
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">HEALTH CARDS ISSUED PER RHU MONTHLY</h3>
+              
+              <!-- Header with title + button aligned right -->
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                  HEALTH CARDS ISSUED PER RHU MONTHLY
+                </h3>
+                <button
+                  @click="showModal = true"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Generate PDF
+                </button>
+              </div>
+
               <div class="h-80">
                 <canvas ref="rhuMonthlyChart"></canvas>
               </div>
+
             </div>
           </div>
+
+
 
           <!-- Charts Row 1 -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -744,4 +780,66 @@ onUnmounted(() => {
       </div>
     </div>
   </AppLayout>
+
+   <!-- Modal -->
+   <div
+    v-if="showModal"
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+  >
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h2 class="text-lg font-semibold mb-4">Generate RHU Report</h2>
+
+      <form @submit.prevent="generatePDF" class="space-y-4">
+        <!-- RHU Name -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">RHU</label>
+          <input
+            v-model="form.rhu"
+            type="text"
+            required
+            class="mt-1 block w-full border border-gray-300 rounded-lg p-2"
+          />
+        </div>
+
+        <!-- Start Date -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Start Date</label>
+          <input
+            v-model="form.start_date"
+            type="date"
+            required
+            class="mt-1 block w-full border border-gray-300 rounded-lg p-2"
+          />
+        </div>
+
+        <!-- End Date -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">End Date</label>
+          <input
+            v-model="form.end_date"
+            type="date"
+            required
+            class="mt-1 block w-full border border-gray-300 rounded-lg p-2"
+          />
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end space-x-2 mt-4">
+          <button
+            type="button"
+            @click="showModal = false"
+            class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Generate
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </template>

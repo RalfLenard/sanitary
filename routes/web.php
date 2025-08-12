@@ -43,6 +43,8 @@ Route::middleware('admin')->group(function () {
     Route::put('health-cards/{id}/update', [HealthCardController::class, 'updateHealthCard'])->name('updateHealthCard');
     Route::delete('/health-card/{id}', [HealthCardController::class, 'deleteHealth'])->name('health-card.delete');
 
+    Route::get('/reports/rhu', [PrintController::class, 'reportRhu'])->name('reports.rhu');
+
 
  
 });

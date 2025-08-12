@@ -28,9 +28,15 @@ class HealthCard extends Model
         'confirmed'
     ];
 
+    // protected $casts = [
+    //     'date_of_issuance' => 'datetime',
+    // ];
+
     protected $casts = [
         'date_of_issuance' => 'datetime',
+        'date_of_expiration' => 'datetime', // ✅ Add this
     ];
+    
 
     public static function generatePrintCode()
     {

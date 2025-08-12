@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HealthCard;
 use Spatie\LaravelPdf\Facades\Pdf;
 use App\Models\Sanitary;
 use App\Models\PrintCode;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Spatie\Browsershot\Browsershot;
+
+use Illuminate\Support\Facades\View;
+
 
 class PrintController extends Controller
 {
@@ -58,6 +62,49 @@ class PrintController extends Controller
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="sanitary-inspection.pdf"',
+        ]);
+    }
+
+    public function reportRhu(Request $request)
+    {
+        // Validate input
+        $validated = $request->validate([
+            'rhu' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+    
+        $rhu = $validated['rhu'];
+        $startDate = $validated['start_date'];
+        $endDate = $validated['end_date'];
+    
+        // Get filtered data
+        $records = HealthCard::where('rhu', $rhu)
+            ->whereBetween('date_of_issuance', [$startDate, $endDate])
+            ->orderBy('date_of_issuance', 'asc')
+            ->get();
+    
+        // Render Blade view
+        $html = View::make('rhuPRint', [
+            'records' => $records,
+            'rhu' => $rhu,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ])->render();
+    
+        // Path for PDF
+        $pdfPath = storage_path("app/public/report_rhu.pdf");
+    
+        // Generate PDF with Browsershot
+        Browsershot::html($html)
+            ->format('A4')
+            ->landscape()
+            ->showBackground()
+            ->save($pdfPath);
+    
+        // Open PDF in browser instead of download
+        return response()->file($pdfPath, [
+            'Content-Type' => 'application/pdf',
         ]);
     }
 }
