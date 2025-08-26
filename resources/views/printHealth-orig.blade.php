@@ -69,71 +69,54 @@
         }
 
         #name {
-            position: absolute;
-            top: 74px;
+            position: relative;
+            top: 72px;
             left: 10px;
-            width: 280px;
-            /* border: solid red 1px; */
-            text-align: center;
         }
 
         #pos {
-            position: absolute;
-            top: 97px;
-            left: 44px;
-            /* height: 25px; */
-            text-align: center;
-            width: 250px;
-            /* border: solid red 1px; */
+            position: relative;
+            top: 81px;
+            left: 50px;
+            height: 25px;
            
             
         }
 
         #age {
-            position: absolute;
-            top: 120px;
-            left: -8px;
-            width: 40px;
-            /* border: solid red 1px; */
-            text-align: center;
-            
-
-            
+            position: relative;
+            top: 82px;
+            left: 8px;
+            height: 25px;
           
             
         }
 
         #gender {
-            position: absolute;
-            top: 120px;
-            left: 65px;
-            width: 70px;
-            /* border: solid red 1px; */
-            text-align: center;
-          
+            position: relative;
+            top: 55px;
+            left: 70px;
+            height: 25px;
         
         }
 
         
         .fil {
-            position: absolute;
-            top: 120px;
-            left: 195px;
-           
-            width: 105px;
-            /* border: solid red 1px; */
-            text-align: center;
+            position: relative;
+            top: 30px;
+            left: 210px;
+            height: 25px;
          
         }
         
         #workplace {
-            position: absolute;
-            top: 155px;
-            left: 66px;
-            width: 240px;
-            /* border: solid red 1px; */
-            text-align: center;
-           
+            position: relative;
+            top: 30px;
+            left: 77px;
+            /* display: flex;
+            justify-content: flex-start;
+            align-items: end; */
+            height: 25px;
            
         }
 
@@ -317,13 +300,9 @@
                     <p id="age">{{ $health->age }}</p>
                     <p id="gender">{{ $health->gender }}</p>
                     <p class="fil">FILIPINO</p>
-                    <p id="workplace" 
-                        style="font-size: {{ strlen(str_replace(' ', '', $health->place_of_employment)) >= 20 ? '9px' : '13px' }};
-                                position: absolute;
-                                top: {{ strlen(str_replace(' ', '', $health->place_of_employment)) >= 20 ? '150px' : '143px' }};">
-                            {{ $health->place_of_employment }}
-                        </p>
-
+                    <p id="workplace" style="font-size: {{ strlen(str_replace(' ', '', $health->place_of_employment)) >= 20 ? '9px' : '13px' }};">
+                        {{ $health->place_of_employment }}
+                    </p>
                 </div>
 
                 <div id="sig">
