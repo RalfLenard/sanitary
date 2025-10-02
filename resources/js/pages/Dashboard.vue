@@ -271,7 +271,7 @@ const initCharts = () => {
             legend: { position: 'right' },
             tooltip: {
               callbacks: {
-                label: function(context: any) {
+                label: function (context: any) {
                   const label = context.label || '';
                   const value = context.raw || 0;
                   const total = context.dataset.data.reduce((a: number, b: number) => a + Number(b), 0);
@@ -494,7 +494,7 @@ const filterBarangayMonthlyData = () => {
   if (!chartInstances.barangayMonthly || !processedChartData.value.barangayMonthly) return;
 
   const chartData = processedChartData.value.barangayMonthly;
-  
+
   if (selectedBarangay.value === 'All') {
     const allDatasets = [...chartData.datasets];
     const limitedDatasets = allDatasets.slice(0, 10);
@@ -505,7 +505,7 @@ const filterBarangayMonthlyData = () => {
     );
     chartInstances.barangayMonthly.data.datasets = filteredDataset;
   }
-  
+
   chartInstances.barangayMonthly.update();
 };
 
@@ -564,9 +564,39 @@ const generatePDF = () => {
   // Close modal
   showModal.value = false;
 };
+
+
+const showModalPErmit = ref(false);
+
+const formPermit = ref({
+  quarter: "",
+  start_date: "",
+  end_date: "",
+});
+
+const generateQuarterPermitPDF = () => {
+  const { quarter, start_date, end_date } = formPermit.value; // ✅ FIXED
+
+  if (!quarter || !start_date || !end_date) {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  // Open PDF in new tab
+  const url = `/reports/permit?quarter=${encodeURIComponent(
+    quarter
+  )}&start_date=${start_date}&end_date=${end_date}`;
+  window.open(url, "_blank");
+
+  // Close modal
+  showModalPErmit.value = false; // ✅ FIXED (was showModal)
+};
+
+
 </script>
 
 <template>
+
   <Head title="Dashboard" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl">
@@ -578,16 +608,13 @@ const generatePDF = () => {
               <p class="text-sm text-gray-500">HEALTH CARDS, SANITARY PERMITS AND DEATH CERTIFICATES ANALYTICS</p>
             </div>
             <div class="mt-4 md:mt-0 flex items-center gap-3">
-              <select 
-                v-model="yearFilter"
-                class="px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700"
-              >
+              <select v-model="yearFilter"
+                class="px-3 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700">
                 <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
               </select>
-              <button 
+              <button
                 class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium shadow-sm bg-primary text-white hover:bg-primary/90"
-                @click="refreshData"
-              >
+                @click="refreshData">
                 <RefreshCw class="mr-2 h-4 w-4" />
                 REFRESH DATA
               </button>
@@ -607,7 +634,7 @@ const generatePDF = () => {
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
               <div class="flex items-center">
                 <div class="p-3 rounded-full bg-green-100 text-green-600">
@@ -619,7 +646,7 @@ const generatePDF = () => {
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
               <div class="flex items-center">
                 <div class="p-3 rounded-full bg-purple-100 text-purple-600">
@@ -631,7 +658,7 @@ const generatePDF = () => {
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
               <div class="flex items-center">
                 <div class="p-3 rounded-full bg-indigo-100 text-indigo-600">
@@ -643,7 +670,7 @@ const generatePDF = () => {
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
               <div class="flex items-center">
                 <div class="p-3 rounded-full bg-red-100 text-red-600">
@@ -683,10 +710,8 @@ const generatePDF = () => {
               <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">HEALTH CARDS ISSUED PER BARANGAY MONTHLY</h3>
                 <div class="mt-2 md:mt-0">
-                  <select 
-                    v-model="selectedBarangay"
-                    class="px-3 py-1 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700"
-                  >
+                  <select v-model="selectedBarangay"
+                    class="px-3 py-1 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700">
                     <option v-for="barangay in barangayList" :key="barangay" :value="barangay">
                       {{ barangay }}
                     </option>
@@ -722,16 +747,13 @@ const generatePDF = () => {
           <!-- RHU Monthly Chart -->
           <div class="mb-8">
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-              
+
               <!-- Header with title + button aligned right -->
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">
                   HEALTH CARDS ISSUED PER RHU MONTHLY
                 </h3>
-                <button
-                  @click="showModal = true"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
+                <button @click="showModal = true" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                   Generate PDF
                 </button>
               </div>
@@ -770,22 +792,29 @@ const generatePDF = () => {
               </div>
             </div>
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">SANITARY PERMITS - QUARTERLY (NEW VS RENEWALS)</h3>
+              <!-- Header with title and button aligned -->
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">SANITARY PERMITS - QUARTERLY (NEW VS RENEWALS)</h3>
+                <button @click="showModalPErmit = true"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  Generate PDF
+                </button>
+              </div>
+
+              <!-- Chart Container -->
               <div class="h-80">
                 <canvas ref="statusChart"></canvas>
               </div>
             </div>
+
           </div>
         </div>
       </div>
     </div>
   </AppLayout>
 
-   <!-- Modal -->
-   <div
-    v-if="showModal"
-    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-  >
+  <!-- Modal -->
+  <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
     <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
       <h2 class="text-lg font-semibold mb-4">Generate RHU Report</h2>
 
@@ -793,49 +822,75 @@ const generatePDF = () => {
         <!-- RHU Name -->
         <div>
           <label class="block text-sm font-medium text-gray-700">RHU</label>
-          <input
-            v-model="form.rhu"
-            type="text"
-            required
-            class="mt-1 block w-full border border-gray-300 rounded-lg p-2"
-          />
+          <input v-model="form.rhu" type="text" required
+            class="mt-1 block w-full border border-gray-300 rounded-lg p-2" />
         </div>
 
         <!-- Start Date -->
         <div>
           <label class="block text-sm font-medium text-gray-700">Start Date</label>
-          <input
-            v-model="form.start_date"
-            type="date"
-            required
-            class="mt-1 block w-full border border-gray-300 rounded-lg p-2"
-          />
+          <input v-model="form.start_date" type="date" required
+            class="mt-1 block w-full border border-gray-300 rounded-lg p-2" />
         </div>
 
         <!-- End Date -->
         <div>
           <label class="block text-sm font-medium text-gray-700">End Date</label>
-          <input
-            v-model="form.end_date"
-            type="date"
-            required
-            class="mt-1 block w-full border border-gray-300 rounded-lg p-2"
-          />
+          <input v-model="form.end_date" type="date" required
+            class="mt-1 block w-full border border-gray-300 rounded-lg p-2" />
         </div>
 
         <!-- Actions -->
         <div class="flex justify-end space-x-2 mt-4">
-          <button
-            type="button"
-            @click="showModal = false"
-            class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
-          >
+          <button type="button" @click="showModal = false" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
             Cancel
           </button>
-          <button
-            type="submit"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Generate
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div v-if="showModalPErmit" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Generate Sanitary Permit Report</h2>
+
+      <!-- Form -->
+      <form @submit.prevent="generateQuarterPermitPDF">
+        <!-- Quarter -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Quarter</label>
+          <select v-model="formPermit.quarter" class="w-full border rounded px-3 py-2">
+            <option disabled value="">Select Quarter</option>
+            <option value="1">1st Quarter</option>
+            <option value="2">2nd Quarter</option>
+            <option value="3">3rd Quarter</option>
+            <option value="4">4th Quarter</option>
+          </select>
+        </div>
+
+        <!-- Start Date -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+          <input type="date" v-model="formPermit.start_date" class="w-full border rounded px-3 py-2" />
+        </div>
+
+        <!-- End Date -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+          <input type="date" v-model="formPermit.end_date" class="w-full border rounded px-3 py-2" />
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end space-x-2">
+          <button type="button" @click="showModalPErmit = false"
+            class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             Generate
           </button>
         </div>

@@ -107,4 +107,50 @@ class PrintController extends Controller
             'Content-Type' => 'application/pdf',
         ]);
     }
+
+
+    // sanitary per quarter print
+    public function reportPermit(Request $request)
+    {
+        // Validate input
+        $validated = $request->validate([
+            'quarter' => 'required|integer',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+    
+        $quarter = $validated['quarter'];
+        $startDate = $validated['start_date'];
+        $endDate = $validated['end_date'];
+    
+        // Get filtered data from Sanitary model
+        $records = Sanitary::where('quarter', $quarter)
+            ->whereBetween('renewed_at', [$startDate, $endDate]) // use the right column
+            ->orderBy('renewed_at', 'asc')
+            ->get();
+    
+        // Render Blade view
+        $html = View::make('PermitPrint', [
+            'records' => $records,
+            'quarter' => $quarter,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ])->render();
+    
+        // Path for PDF
+        $pdfPath = storage_path("app/public/report_permit.pdf");
+    
+        // Generate PDF with Browsershot
+        Browsershot::html($html)
+            ->format('A4')
+            ->landscape()
+            ->showBackground()
+            ->save($pdfPath);
+    
+        // Open PDF in browser instead of download
+        return response()->file($pdfPath, [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
+    
 }

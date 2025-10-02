@@ -45,6 +45,8 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/reports/rhu', [PrintController::class, 'reportRhu'])->name('reports.rhu');
 
+    Route::get('/reports/permit', [PrintController::class, 'reportPermit'])->name('reports.permit');
+
 
  
 });
