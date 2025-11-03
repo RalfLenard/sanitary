@@ -139,9 +139,18 @@ class HealthCardController extends Controller
             $expirationDate = $issuanceDate->copy()->addMonths(12);
         } elseif (strtolower($request->health_card_type) === 'food') {
             $expirationDate = $issuanceDate->copy()->addMonths(6);
-        } elseif (strtolower($request->health_card_type) === 'others') {
-            $expirationDate = Carbon::now()->endOfYear();
+        } elseif ($request->health_card_type === 'others') {
+            $issueDate = Carbon::parse($request->date_of_issuance);
+        
+            if ($issueDate->month >= 11) {
+                // If issue date is in November or December → next year
+                $expirationDate = $issueDate->copy()->addYear()->endOfYear();
+            } else {
+                // Otherwise → current year
+                $expirationDate = $issueDate->copy()->endOfYear();
+            }
         }
+        
 
         // Create Health Card with all fields uppercased
         $healthCard = HealthCard::create([
@@ -187,7 +196,15 @@ class HealthCardController extends Controller
         } elseif ($request->health_card_type === 'food') {
             $expirationDate = $issuanceDate->copy()->addMonths(6); // 6 months from issuance
         } elseif ($request->health_card_type === 'others') {
-            $expirationDate = Carbon::now()->endOfYear(); // Always sets to December 31 of the current year
+            $issueDate = Carbon::parse($request->date_of_issuance);
+        
+            if ($issueDate->month >= 11) {
+                // If issue date is in November or December → next year
+                $expirationDate = $issueDate->copy()->addYear()->endOfYear();
+            } else {
+                // Otherwise → current year
+                $expirationDate = $issueDate->copy()->endOfYear();
+            }
         }
 
         try {
