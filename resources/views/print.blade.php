@@ -234,8 +234,8 @@
 <body>
     <div class="conatainer">
         <div class="img_holder">
-            <p class="year">{{ $inspection->renewal_year }}</p>
-            <p class="codes">{{  $permitCode }}</p>
+            <p class="year">{{ $renewalYear }}</p>
+            <p class="codes"> SP-{{ $inspection->sanitary_code }}</p>
         </div>
         <div class="info">
             <p class="a" >
