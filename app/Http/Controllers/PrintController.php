@@ -9,6 +9,7 @@ use App\Models\PrintCode;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Spatie\Browsershot\Browsershot;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\View;
 
@@ -18,41 +19,52 @@ class PrintController extends Controller
     public function print(Request $request, $id)
     {
         $inspection = Sanitary::findOrFail($id);
+    
         $today = Carbon::now()->format('F d, Y');
         $lastDayOfYear = Carbon::now()->endOfYear()->format('F d, Y');
         $currentYear = Carbon::now()->year;
     
-        $inspection->confirmed = true;
-        $inspection->save();
+        DB::transaction(function () use ($inspection, $currentYear, &$permitCode) {
     
-        if (!empty($inspection->permit_code)) {
-            $permitCode = $inspection->permit_code;
-        } else {
-            $existingPermit = PrintCode::where('permit_code', $inspection->permit_code)->first();
+            // Lock the inspection row
+            $inspection->lockForUpdate();
     
-            if ($existingPermit) {
-                $permitCode = $existingPermit->permit_code;
-            } else {
-                $lastPermit = PrintCode::where('year', $currentYear)->orderBy('sequence', 'desc')->first();
-                $sequence = $lastPermit ? $lastPermit->sequence + 1 : 1;
-                $formattedSequence = str_pad($sequence, 4, '0', STR_PAD_LEFT);
-                $permitCode = "SP-{$formattedSequence}";
+            $inspection->confirmed = true;
+            $inspection->save();
     
-                $newPermit = PrintCode::create([
-                    'permit_code' => $permitCode,
-                    'year' => $currentYear,
-                    'sequence' => $sequence
-                ]);
-    
-                $inspection->permit_code = $newPermit->permit_code;
-                $inspection->save();
+            // ✅ Reuse existing permit code
+            if ($inspection->permit_code) {
+                $permitCode = $inspection->permit_code;
+                return;
             }
-        }
     
-        // ✅ Render the view as HTML
-        $html = view('print', compact('inspection', 'today', 'lastDayOfYear', 'permitCode'))->render();
+            // ✅ Lock print_codes table for this year
+            $lastPermit = PrintCode::where('year', $currentYear)
+                ->orderByDesc('sequence')
+                ->lockForUpdate()
+                ->first();
     
-        // ✅ Generate the PDF using Browsershot
+            $sequence = $lastPermit ? $lastPermit->sequence + 1 : 1;
+            $formattedSequence = str_pad($sequence, 4, '0', STR_PAD_LEFT);
+            $permitCode = "SP-{$formattedSequence}";
+    
+            PrintCode::create([
+                'permit_code' => $permitCode,
+                'year'        => $currentYear,
+                'sequence'    => $sequence,
+            ]);
+    
+            $inspection->permit_code = $permitCode;
+            $inspection->save();
+        });
+    
+        $html = view('print', compact(
+            'inspection',
+            'today',
+            'lastDayOfYear',
+            'permitCode'
+        ))->render();
+    
         $pdfContent = Browsershot::html($html)
             ->setChromePath('C:\Program Files\Google\Chrome\Application\chrome.exe')
             ->addChromiumArguments(['--no-sandbox', '--disable-gpu'])
@@ -64,7 +76,6 @@ class PrintController extends Controller
             'Content-Disposition' => 'inline; filename="sanitary-inspection.pdf"',
         ]);
     }
-
     public function reportRhu(Request $request)
     {
         // Validate input
