@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, defineProps, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { MoreHorizontalIcon, SearchIcon, PlusIcon, FilterIcon } from 'lucide-vue-next';
+import { 
+  MoreHorizontalIcon, 
+  SearchIcon, 
+  PlusIcon, 
+  FilterIcon, 
+  PrinterIcon, 
+  Trash2Icon,
+  Edit3Icon,
+  RefreshCwIcon
+} from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import AddPermitModal from "@/components/AddPermitModal.vue";
@@ -13,421 +22,294 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Sanitary', href: '/sanitary' },
 ];
 
-// Props
-const props = defineProps<{ sanitaryPermits: Record<string, any>; quarterlyData: Record<string, any> }>();
+// Props from Controller
+const props = defineProps<{ 
+    sanitaryPermits: any; 
+    quarterlyData: any[]; 
+    filters?: any 
+}>();
 
 // Reactive state
-const searchTerm = ref('');
+const searchTerm = ref(props.filters?.search || '');
 const activeActionMenu = ref<number | null>(null);
 const isUpdateModalOpen = ref(false);
 const selectedPermit = ref<Record<string, any> | null>(null);
 const showAddDialog = ref(false);
-// Quarter filter state
-const selectedQuarter = ref<number | null>(null);
-const isQuarterFilterOpen = ref(false);
-const quarterlyData = ref([]);
 
-const cardToDeleteId = ref<string | null>(null);
-const isDeleteModalOpen = ref(false);
-
-// Open confirmation modal
-const confirmDelete = (id: string) => {
-    cardToDeleteId.value = id;
-    isDeleteModalOpen.value = true;
-};
-
-// Delete card using Inertia
-const deleteCard = () => {
-    if (!cardToDeleteId.value) return;
-
-    Inertia.delete(route('sanitary.delete', cardToDeleteId.value), {
-        onSuccess: () => {
-            isDeleteModalOpen.value = false;
-            cardToDeleteId.value = null;
-        },
-        onError: (errors) => {
-            alert("Failed to delete the Sanitary Permit.");
-        }
-    });
-};
-
-
-const filteredPermits = computed(() => {
-  let permits = props.sanitaryPermits.data;
-
-  if (selectedQuarter.value !== null) {
-    permits = permits.filter(permit => permit.quarter == selectedQuarter.value);
-  }
-
-  if (searchTerm.value) {
-    const term = searchTerm.value.toLowerCase();
-    permits = permits.filter(permit =>
-      Object.values(permit).some(value =>
-        value && value.toString().toLowerCase().includes(term)
-      )
-    );
-  }
-
-  return permits;
+// Advanced Search & Filter state
+const showAdvancedSearch = ref(false);
+const isFilterOpen = ref(false);
+const searchCriteria = ref({
+  name_of_establishment: props.filters?.name_of_establishment || '',
+  name_of_owner: props.filters?.name_of_owner || '',
+  barangay: props.filters?.barangay || '',
+  sanitary_code: props.filters?.sanitary_code || '',
+  renewal_year: props.filters?.renewal_year || new Date().getFullYear(),
+  quarter: props.filters?.quarter || null,
 });
 
-// Computed property for selected quarter label
-const selectedQuarterLabel = computed(() => selectedQuarter.value ? `Q${selectedQuarter.value}` : "All Quarters");
+const isDeleteModalOpen = ref(false);
+const cardToDeleteId = ref<string | null>(null);
 
-// Watch for quarter changes
-watch(selectedQuarter, (newQuarter) => console.log("Quarter changed to:", newQuarter));
+// --- Functions ---
 
-// Set quarter filter
+// Main filter execution (Server-side)
+const performSearch = () => {
+  router.get(route('sanitary'), {
+    search: searchTerm.value,
+    ...searchCriteria.value
+  }, {
+    preserveState: true,
+    preserveScroll: true,
+    replace: true // Prevents flooding history
+  });
+};
+
+// Pagination handler
+const fetchData = (url: string) => {
+  router.get(url, {
+    search: searchTerm.value,
+    ...searchCriteria.value
+  }, {
+    preserveState: true,
+    preserveScroll: true
+  });
+};
+
 const setQuarterFilter = (quarter: number | null) => {
-  selectedQuarter.value = quarter;
-  isQuarterFilterOpen.value = false;
+  searchCriteria.value.quarter = quarter;
+  isFilterOpen.value = false;
+  performSearch();
 };
 
-// Toggle action menu visibility
-const toggleActionMenu = (permitId: number) => {
-  activeActionMenu.value = activeActionMenu.value === permitId ? null : permitId;
+const selectedQuarterLabel = computed(() => 
+  searchCriteria.value.quarter ? `Quarter ${searchCriteria.value.quarter}` : "All Quarters"
+);
+
+// Delete Logic
+const confirmDelete = (id: string) => {
+  cardToDeleteId.value = id;
+  isDeleteModalOpen.value = true;
+  activeActionMenu.value = null;
 };
 
-// Open update modal
+const deleteCard = () => {
+  if (!cardToDeleteId.value) return;
+  Inertia.delete(route('sanitary.delete', cardToDeleteId.value), {
+    onSuccess: () => {
+      isDeleteModalOpen.value = false;
+      cardToDeleteId.value = null;
+    }
+  });
+};
+
+// Actions
 const openUpdateModal = (permit: Record<string, any>) => {
   selectedPermit.value = permit;
   isUpdateModalOpen.value = true;
   activeActionMenu.value = null;
 };
 
-// Close update modal
-const closeUpdateModal = () => {
-  isUpdateModalOpen.value = false;
-  selectedPermit.value = null;
-};
-
-// Mark permit as inspected
-const markAsInspected = (id: number) => {
-  if (!id) return console.error("Permit ID is missing");
-  useForm({}).put(route("sanitaryPermit.inspected", { id }), {
-    preserveScroll: true,
-    onSuccess: () => console.log(`Permit ${id} status updated to Inspected`),
-    onError: (errors) => console.error("Error updating status:", errors)
-  });
-};
-
-// Renew permit
 const renewPermit = (id: number) => {
-  if (!id) return console.error("Permit ID is missing");
   useForm({}).put(route("sanitaryPermit.renewal", { id }), {
     preserveScroll: true,
-    onSuccess: () => console.log(`Permit ${id} successfully renewed!`),
-    onError: (errors) => console.error("Error renewing permit:", errors)
+    onSuccess: () => activeActionMenu.value = null
   });
 };
 
-// Print certificate
 const printCertificate = (permitId: number) => {
-  if (!window.Laravel?.routes?.sanitary_print) {
-    console.error("Laravel routes not defined.");
-    return;
-  }
   const url = window.Laravel.routes.sanitary_print.replace('__ID__', permitId.toString());
   window.open(url, '_blank');
 };
 
-
-
-// Advanced Search
-const showAdvancedSearch = ref(false);
-const isFilterOpen = ref(false);
-const searchCriteria = ref({
-  name_of_establishment: '',
-  name_of_owner: '',
-  barangay: '',
-  permit_code: '',
-  renewal_year: ''
-});
-
-// Perform an advanced search
-const performAdvancedSearch = () => {
-  showAdvancedSearch.value = false;
-  router.get(route('sanitary'), searchCriteria.value, { preserveState: true });
+const toggleActionMenu = (permitId: number) => {
+  activeActionMenu.value = activeActionMenu.value === permitId ? null : permitId;
 };
-
-// Fetch data for pagination
-const fetchData = (url) => {
-  router.get(url, {
-    search: searchTerm.value, // ✅ Keep the search term
-    name_of_establishment: searchCriteria.value.name_of_establishment,
-    name_of_owner: searchCriteria.value.name_of_owner,
-    barangay: searchCriteria.value.barangay,
-    permit_code: searchCriteria.value.permit_code,
-    renewal_year: searchCriteria.value.renewal_year,
-    quarter: selectedQuarter.value, // ✅ Preserve selected quarter
-  }, {
-    preserveState: true,
-    preserveScroll: true
-  });
-};
-
-const performSearch = () => {
-  router.get(route('sanitary'), {
-    search: searchTerm.value,
-    name_of_establishment: searchCriteria.value.name_of_establishment,
-    name_of_owner: searchCriteria.value.name_of_owner,
-    barangay: searchCriteria.value.barangay,
-    permit_code: searchCriteria.value.permit_code,
-    renewal_year: searchCriteria.value.renewal_year,
-    quarter: selectedQuarter.value
-  }, {
-    preserveState: true,
-    preserveScroll: true
-  });
-};
-
 </script>
 
 <template>
-
   <Head title="Sanitary" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-      <div class="flex flex-col gap-6">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 class="text-3xl font-bold">Sanitary Permits</h1>
-          <div class="flex items-center gap-2">
-            <button @click="showAddDialog = true"
-              class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
-              <PlusIcon class="mr-2 h-4 w-4" />
-              Add New Permit
+    <div class="p-6 space-y-6">
+      
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight">Sanitary Permits</h1>
+          <p class="text-muted-foreground">Manage and track sanitary inspections for {{ searchCriteria.renewal_year }}.</p>
+        </div>
+        <button @click="showAddDialog = true"
+          class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 transition">
+          <PlusIcon class="mr-2 h-4 w-4" /> Add New Permit
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div v-for="data in quarterlyData" :key="data.quarter" 
+             class="bg-white p-4 rounded-xl border shadow-sm space-y-2"
+             :class="{'ring-2 ring-blue-500': searchCriteria.quarter == data.quarter}">
+          <div class="text-xs font-bold text-gray-500 uppercase">Quarter {{ data.quarter }}</div>
+          <div class="flex justify-between items-end">
+            <div>
+              <div class="text-2xl font-bold">{{ data.new_businesses + data.renewals }}</div>
+              <div class="text-[10px] text-muted-foreground uppercase">Total Permits</div>
+            </div>
+            <div class="text-right text-[11px]">
+              <div class="text-green-600 font-medium">New: {{ data.new_businesses }}</div>
+              <div class="text-blue-600 font-medium">Renewed: {{ data.renewals }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border shadow-sm p-4">
+        <div class="flex flex-col md:flex-row gap-4 justify-between">
+          <div class="flex flex-1 gap-2 items-center">
+            <select v-model="searchCriteria.renewal_year" @change="performSearch" 
+              class="h-10 rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-blue-500">
+              <option v-for="year in [2026, 2025, 2024, 2023]" :key="year" :value="year">Year {{ year }}</option>
+            </select>
+
+            <div class="relative flex-1 max-w-sm">
+              <SearchIcon class="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <input v-model="searchTerm" @input="performSearch" placeholder="Quick search..."
+                class="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm focus:ring-2 focus:ring-blue-500" />
+            </div>
+            
+            <button @click="showAdvancedSearch = true"
+              class="inline-flex items-center h-10 px-3 py-2 border rounded-md text-sm font-medium hover:bg-gray-50">
+              <FilterIcon class="mr-2 h-4 w-4" /> Advanced
             </button>
-            <!-- Add Permit Modal -->
-            <AddPermitModal :show="showAddDialog" @close="showAddDialog = false" />
           </div>
-        </div>
 
-        <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
-          <div class="flex flex-col space-y-1.5 p-6 pb-3">
-          </div>
-          <div class="p-6 pt-0">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
-              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
-                <!-- Quick Search Input -->
-                <div class="relative w-full sm:w-96">
-                  <SearchIcon class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <input v-model="searchTerm" @input="performSearch" placeholder="Search permits..."
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-8 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-                </div>
-
-
-                <!-- Advanced Search Button -->
-                <button @click="showAdvancedSearch = true"
-                  class="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground h-10">
-                  <FilterIcon class="mr-2 h-4 w-4" />
-                  Advanced Search
-                </button>
-              </div>
-
-              <!-- Advanced Search Modal -->
-              <div v-if="showAdvancedSearch"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                <div class="bg-white rounded-lg p-6 shadow-lg w-96">
-                  <h2 class="text-lg font-semibold mb-4">Advanced Search</h2>
-
-                  <label class="block text-sm font-semibold mb-1">Establishment Name</label>
-                  <input v-model="searchCriteria.name_of_establishment" class="w-full border rounded-md p-2 mb-2"
-                    placeholder="Enter name">
-
-                  <label class="block text-sm font-semibold mb-1">Owner Name</label>
-                  <input v-model="searchCriteria.name_of_owner" class="w-full border rounded-md p-2 mb-2"
-                    placeholder="Owner name">
-
-                  <label class="block text-sm font-semibold mb-1">Barangay</label>
-                  <input v-model="searchCriteria.barangay" class="w-full border rounded-md p-2 mb-2"
-                    placeholder="Barangay">
-
-
-                  <label class="block text-sm font-semibold mb-1">Renewal Year</label>
-                  <input v-model="searchCriteria.renewal_year" class="w-full border rounded-md p-2 mb-2"
-                    placeholder="YYYY">
-
-                  <!-- Search & Close Buttons -->
-                  <div class="flex justify-end gap-2 mt-4">
-                    <button @click="showAdvancedSearch = false"
-                      class="px-4 py-2 bg-gray-500 text-white rounded-md">Close</button>
-                    <button @click="performAdvancedSearch"
-                      class="px-4 py-2 bg-blue-600 text-white rounded-md">Search</button>
-                  </div>
-                </div>
-              </div>
-              <!-- Quarter Filter Dropdown -->
-              <div class="relative">
-                <button @click="isFilterOpen = !isFilterOpen"
-                  class="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-gray-100 h-10 w-48">
-                  <FilterIcon class="mr-2 h-4 w-4 text-gray-500" />
-                  {{ selectedQuarterLabel }}
-                </button>
-
-                <!-- Dropdown Menu -->
-                <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 scale-95"
-                  enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-75"
-                  leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-                  <div v-if="isFilterOpen"
-                    class="absolute right-0 z-20 mt-2 w-56 origin-top-right bg-white divide-y divide-gray-100 rounded-md shadow-md ring-1 ring-black ring-opacity-5">
-                    <div class="p-2">
-                      <button @click="setQuarterFilter(null)"
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        All Quarters
-                      </button>
-                      <button @click="setQuarterFilter(1)"
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        First Quarter
-                      </button>
-                      <button @click="setQuarterFilter(2)"
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Second Quarter
-                      </button>
-                      <button @click="setQuarterFilter(3)"
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Third Quarter
-                      </button>
-                      <button @click="setQuarterFilter(4)"
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Fourth Quarter
-                      </button>
-                    </div>
-                  </div>
-                </transition>
-              </div>
-            </div>
-
-            <div class="rounded-md border">
-              <table class="w-full text-sm border-collapse ">
-                <thead class="bg-gray-100 sticky top-0 z-10">
-                  <tr class="border-b">
-                    <th class="h-12 px-4 text-left font-medium text-gray-600">ID</th>
-                    <th class="h-12 px-4 text-left font-medium text-gray-600">Business Name</th>
-                    <th class="h-12 px-4 text-left font-medium text-gray-600">Owner</th>
-                    <th class="h-12 px-4 text-left font-medium hidden md:table-cell">Contact</th>
-                    <th class="h-12 px-4 text-left font-medium hidden md:table-cell">Barangay</th>
-                    <th class="h-12 px-4 text-left font-medium hidden md:table-cell">Line of Business</th>
-                    <th class="h-12 px-4 text-left font-medium hidden md:table-cell">Year</th>
-                    <th class="h-12 px-4 text-left font-medium">Status</th>
-                    <th class="h-12 px-4 text-right font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="permit in filteredPermits" :key="permit.id"
-                    class="border-b transition-colors hover:bg-gray-50 even:bg-gray-50"  style="text-transform: uppercase;">
-                    <td class="p-4 font-medium">{{ permit.id }}</td>
-                    <td class="p-4">{{ permit.name_of_establishment }}</td>
-                    <td class="p-4">{{ permit.name_of_owner }}</td>
-                    <td class="p-4 hidden md:table-cell">{{ permit.contact_number }}</td>
-                    <td class="p-4 hidden md:table-cell">{{ permit.barangay }}</td>
-                    <td class="p-4 hidden md:table-cell">{{ permit.line_of_business }}</td>
-                    <td class="p-4 hidden md:table-cell">{{ permit.renewal_year }}</td>
-                    <td class="p-4">
-                      <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold" :class="{
-                        'bg-green-100 text-green-800': permit.status === 'Active',
-                        'bg-red-100 text-red-800': permit.status === 'Expired',
-                        'bg-yellow-100 text-yellow-800': permit.status === 'Suspended'
-                      }">
-                        {{ permit.status }}
-                      </span>
-                    </td>
-                    <td class="p-4 text-right">
-                      <div class="relative">
-                        <button @click="toggleActionMenu(permit.id)"
-                          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 shadow-sm hover:bg-gray-100">
-                          <MoreHorizontalIcon class="h-4 w-4" />
-                          <span class="sr-only">Open menu</span>
-                        </button>
-                        <div v-if="activeActionMenu === permit.id"
-                          class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md border bg-white shadow-lg">
-                          <div class="p-2 space-y-1">
-                            <button @click="openUpdateModal(permit)"
-                              class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                              Edit Permit
-                            </button>
-                            <!-- <button @click="markAsInspected(permit.id)"
-                              class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                              Inspect Done
-                            </button> -->
-                            <button @click="renewPermit(permit.id)"
-                              class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                              Renew Permit
-                            </button>
-                           
-                            <button  @click="confirmDelete(permit.id)"
-                              class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                              Delete
-                            </button>
-
-                            <button @click="printCertificate(permit.id)"
-                              class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                              Print Certificate
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <!-- No results message -->
-              <div v-if="filteredPermits.length === 0" class="p-4 text-center text-muted-foreground">
-                No permits found.
-              </div>
-
-
-
-            </div>
-
-            <!-- Pagination -->
-            <div class="mt-4 flex justify-end space-x-4">
-              <!-- Previous Button -->
-              <button v-if="sanitaryPermits.prev_page_url" @click="fetchData(sanitaryPermits.prev_page_url)"
-                class="px-3 py-1 text-sm font-medium text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                Prev
-              </button>
-
-              <!-- Page Info -->
-              <span class="self-center text-sm font-medium text-gray-700">
-                Page {{ sanitaryPermits.current_page }} of {{ sanitaryPermits.last_page }}
-              </span>
-
-              <!-- Next Button -->
-              <button v-if="sanitaryPermits.next_page_url" @click="fetchData(sanitaryPermits.next_page_url)"
-                class="px-3 py-1 text-sm font-medium text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                Next
-              </button>
+          <div class="relative">
+            <button @click="isFilterOpen = !isFilterOpen"
+              class="inline-flex items-center justify-between w-48 h-10 px-4 py-2 border rounded-md text-sm font-medium bg-white hover:bg-gray-50">
+              {{ selectedQuarterLabel }}
+              <FilterIcon class="ml-2 h-3 w-3 text-gray-400" />
+            </button>
+            <div v-if="isFilterOpen" class="absolute right-0 z-20 mt-2 w-48 bg-white border rounded-md shadow-xl py-1">
+              <button @click="setQuarterFilter(null)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">All Quarters</button>
+              <button v-for="q in [1,2,3,4]" :key="q" @click="setQuarterFilter(q)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Quarter {{ q }}</button>
             </div>
           </div>
         </div>
-        <!-- Update Permit Modal -->
-        <UpdatePermitModal :show="isUpdateModalOpen" :permit="selectedPermit" @close="closeUpdateModal" />
+      </div>
 
-        <div v-if="isDeleteModalOpen"
-                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium">Are you sure?</h3>
-                        <p class="mt-2 text-sm text-gray-500">
-                            This action cannot be undone. This will permanently delete the Sanitary Permit.
-                        </p>
-                    </div>
-                    <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 rounded-b-lg">
-                        <button type="button"
-                            class="px-4 py-2 border rounded-md text-sm font-medium shadow-sm bg-white text-gray-700 hover:bg-gray-50"
-                            @click="isDeleteModalOpen = false">
-                            Cancel
-                        </button>
-                        <button type="button"
-                            class="px-4 py-2 rounded-md text-sm font-medium shadow-sm bg-red-600 text-white hover:bg-red-700"
-                            @click="deleteCard">
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
+      <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left border-collapse uppercase">
+            <thead class="bg-gray-50 text-gray-600 font-semibold border-b">
+              <tr>
+                <th class="p-4">Establishment</th>
+                <th class="p-4">Owner</th>
+                <th class="p-4 hidden lg:table-cell">Barangay</th>
+                <th class="p-4 text-center">Year/Qtr</th>
+                <th class="p-4">Status</th>
+                <th class="p-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr v-for="permit in sanitaryPermits.data" :key="permit.id" class="hover:bg-gray-50 transition-colors">
+                <td class="p-4 font-medium text-gray-900">
+                  <div class="text-sm">{{ permit.name_of_establishment }}</div>
+                  <div class="text-[10px] text-gray-400 font-mono">{{ permit.sanitary_code }}</div>
+                </td>
+                <td class="p-4">{{ permit.name_of_owner }}</td>
+                <td class="p-4 hidden lg:table-cell text-gray-500">{{ permit.barangay }}</td>
+                <td class="p-4 text-center font-mono text-xs">
+                  {{ permit.renewal_year }} / Q{{ permit.quarter }}
+                </td>
+                <td class="p-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    :class="{
+                      'bg-green-100 text-green-800': permit.status === 'Active',
+                      'bg-red-100 text-red-800': permit.status === 'Expired',
+                      'bg-yellow-100 text-yellow-800': permit.status === 'Suspended'
+                    }">
+                    {{ permit.status }}
+                  </span>
+                </td>
+                <td class="p-4 text-right relative">
+                  <button @click="toggleActionMenu(permit.id)" class="p-2 hover:bg-gray-100 rounded-full transition">
+                    <MoreHorizontalIcon class="h-4 w-4 text-gray-500" />
+                  </button>
+                  
+                  <div v-if="activeActionMenu === permit.id" 
+                    class="absolute right-4 mt-1 w-48 bg-white border rounded-lg shadow-xl z-30 py-1 overflow-hidden">
+                    <button @click="openUpdateModal(permit)" class="flex items-center w-full px-4 py-2 text-xs hover:bg-gray-50">
+                      <Edit3Icon class="mr-2 h-3 w-3" /> Edit Record
+                    </button>
+                    <button @click="renewPermit(permit.id)" class="flex items-center w-full px-4 py-2 text-xs hover:bg-gray-50 text-blue-600">
+                      <RefreshCwIcon class="mr-2 h-3 w-3" /> Renew Permit
+                    </button>
+                    <button @click="printCertificate(permit.id)" class="flex items-center w-full px-4 py-2 text-xs hover:bg-gray-50">
+                      <PrinterIcon class="mr-2 h-3 w-3" /> Print Certificate
+                    </button>
+                    <div class="border-t my-1"></div>
+                    <button @click="confirmDelete(permit.id)" class="flex items-center w-full px-4 py-2 text-xs hover:bg-gray-50 text-red-600">
+                      <Trash2Icon class="mr-2 h-3 w-3" /> Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="sanitaryPermits.data.length === 0">
+                <td colspan="6" class="p-8 text-center text-gray-500">No records found for the selected criteria.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="px-4 py-3 bg-gray-50 border-t flex items-center justify-between">
+          <div class="text-xs text-gray-500">
+            Showing {{ sanitaryPermits.from }} to {{ sanitaryPermits.to }} of {{ sanitaryPermits.total }} results
+          </div>
+          <div class="flex gap-2">
+            <button v-if="sanitaryPermits.prev_page_url" @click="fetchData(sanitaryPermits.prev_page_url)"
+              class="px-3 py-1 text-xs border bg-white rounded-md hover:bg-gray-100">Previous</button>
+            <button v-if="sanitaryPermits.next_page_url" @click="fetchData(sanitaryPermits.next_page_url)"
+              class="px-3 py-1 text-xs border bg-white rounded-md hover:bg-gray-100">Next</button>
+          </div>
+        </div>
       </div>
     </div>
+
+    <AddPermitModal :show="showAddDialog" @close="showAddDialog = false" />
+    <UpdatePermitModal :show="isUpdateModalOpen" :permit="selectedPermit" @close="isUpdateModalOpen = false" />
+
+    <div v-if="showAdvancedSearch" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <h2 class="text-lg font-bold mb-4">Advanced Search</h2>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-semibold mb-1 block">Establishment Name</label>
+            <input v-model="searchCriteria.name_of_establishment" class="w-full border rounded-md p-2 text-sm" placeholder="Search establishment...">
+          </div>
+          <div>
+            <label class="text-xs font-semibold mb-1 block">Owner Name</label>
+            <input v-model="searchCriteria.name_of_owner" class="w-full border rounded-md p-2 text-sm" placeholder="Search owner...">
+          </div>
+          <div>
+            <label class="text-xs font-semibold mb-1 block">Barangay</label>
+            <input v-model="searchCriteria.barangay" class="w-full border rounded-md p-2 text-sm" placeholder="Search barangay...">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6">
+          <button @click="showAdvancedSearch = false" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md">Cancel</button>
+          <button @click="performSearch(); showAdvancedSearch = false" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="isDeleteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-2xl">
+        <h3 class="text-lg font-bold text-gray-900">Confirm Deletion</h3>
+        <p class="text-sm text-gray-500 mt-2">Are you sure? This action will permanently remove this permit record from the system.</p>
+        <div class="flex justify-end gap-3 mt-6">
+          <button @click="isDeleteModalOpen = false" class="px-4 py-2 text-sm border rounded-md">Cancel</button>
+          <button @click="deleteCard" class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">Delete Permanently</button>
+        </div>
+      </div>
+    </div>
+
   </AppLayout>
 </template>
