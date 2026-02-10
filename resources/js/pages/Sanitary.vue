@@ -353,13 +353,15 @@ const performSearch = () => {
                               class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                               Renew Permit
                             </button>
-                            <button @click="printCertificate(permit.id)"
-                              class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                              Print Certificate
-                            </button>
+                           
                             <button  @click="confirmDelete(permit.id)"
                               class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                               Delete
+                            </button>
+
+                            <button @click="printCertificate(permit.id)"
+                              class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                              Print Certificate
                             </button>
                           </div>
                         </div>

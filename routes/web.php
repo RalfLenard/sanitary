@@ -20,11 +20,12 @@ Route::get('/', function () {
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 
-Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
-Route::middleware('admin')->group(function () {
+
+Route::middleware(['auth', 'admin'])->group(function () {
 
     // dashboard
+    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
     // sanitary
     Route::get('/sanitary', [SanitaryController::class, 'sanitary'])->name('sanitary');
