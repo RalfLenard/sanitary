@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { 
   MoreHorizontalIcon, 
@@ -9,7 +9,8 @@ import {
   PrinterIcon, 
   Trash2Icon,
   Edit3Icon,
-  RefreshCwIcon
+  RefreshCwIcon,
+  AlertCircleIcon
 } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -25,11 +26,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 // Props from Controller
 const props = defineProps<{ 
     sanitaryPermits: any; 
-    quarterlyData: any[]; 
+    quarterData: any[]; 
     filters?: any 
 }>();
 
-// Reactive state
+// --- Reactive state ---
 const searchTerm = ref(props.filters?.search || '');
 const activeActionMenu = ref<number | null>(null);
 const isUpdateModalOpen = ref(false);
@@ -48,15 +49,14 @@ const searchCriteria = ref({
   quarter: props.filters?.quarter || null,
 });
 
+// Confirmation Modals State
 const isDeleteModalOpen = ref(false);
-const cardToDeleteId = ref<string | null>(null);
 const isRenewModalOpen = ref(false);
 const isPrintModalOpen = ref(false);
 const pendingPermitAction = ref<any>(null);
 
 // --- Functions ---
 
-// Main filter execution (Server-side)
 const performSearch = () => {
   router.get(route('sanitary'), {
     search: searchTerm.value,
@@ -64,11 +64,10 @@ const performSearch = () => {
   }, {
     preserveState: true,
     preserveScroll: true,
-    replace: true // Prevents flooding history
+    replace: true 
   });
 };
 
-// Pagination handler
 const fetchData = (url: string) => {
   router.get(url, {
     search: searchTerm.value,
@@ -89,30 +88,30 @@ const selectedQuarterLabel = computed(() =>
   searchCriteria.value.quarter ? `Quarter ${searchCriteria.value.quarter}` : "All Quarters"
 );
 
-// Delete Logic
-const confirmDelete = (id: string) => {
-  cardToDeleteId.value = id;
-  isDeleteModalOpen.value = true;
-  activeActionMenu.value = null;
-};
+// --- Action Handlers ---
 
-const deleteCard = () => {
-  if (!cardToDeleteId.value) return;
-  Inertia.delete(route('sanitary.delete', cardToDeleteId.value), {
-    onSuccess: () => {
-      isDeleteModalOpen.value = false;
-      cardToDeleteId.value = null;
-    }
-  });
-};
-
-// Actions
 const openUpdateModal = (permit: Record<string, any>) => {
   selectedPermit.value = permit;
   isUpdateModalOpen.value = true;
   activeActionMenu.value = null;
 };
 
+// Delete Logic
+const confirmDelete = (permit: any) => {
+  pendingPermitAction.value = permit;
+  isDeleteModalOpen.value = true;
+  activeActionMenu.value = null;
+};
+
+const executeDelete = () => {
+  if (!pendingPermitAction.value) return;
+  Inertia.delete(route('sanitary.delete', pendingPermitAction.value.id), {
+    onSuccess: () => {
+      isDeleteModalOpen.value = false;
+      pendingPermitAction.value = null;
+    }
+  });
+};
 
 // Renewal Logic
 const confirmRenewal = (permit: any) => {
@@ -150,7 +149,6 @@ const executePrint = () => {
 const toggleActionMenu = (permitId: number) => {
   activeActionMenu.value = activeActionMenu.value === permitId ? null : permitId;
 };
-
 </script>
 
 <template>
@@ -261,9 +259,9 @@ const toggleActionMenu = (permitId: number) => {
                   </button>
                   
                   <div v-if="activeActionMenu === permit.id" 
-                    class="absolute right-4 mt-1 w-48 bg-white border rounded-lg shadow-xl z-30 py-1 overflow-hidden">
+                    class="absolute right-4 mt-1 w-48 bg-white border rounded-lg shadow-xl z-30 py-1 overflow-hidden text-left">
                     <button @click="openUpdateModal(permit)" class="flex items-center w-full px-4 py-2 text-xs hover:bg-gray-50">
-                      <Edit3Icon class="mr-2 h-3 w-3" /> Edit Record
+                      <Edit3Icon class="mr-2 h-3 w-3 text-gray-400" /> Edit Record
                     </button>
                     <button @click="confirmRenewal(permit)" class="flex items-center w-full px-4 py-2 text-xs hover:bg-gray-50 text-blue-600">
                       <RefreshCwIcon class="mr-2 h-3 w-3" /> Renew Permit
@@ -272,7 +270,7 @@ const toggleActionMenu = (permitId: number) => {
                       <PrinterIcon class="mr-2 h-3 w-3 text-gray-400" /> Print Certificate
                     </button>
                     <div class="border-t my-1"></div>
-                    <button @click="confirmDelete(permit.id)" class="flex items-center w-full px-4 py-2 text-xs hover:bg-gray-50 text-red-600">
+                    <button @click="confirmDelete(permit)" class="flex items-center w-full px-4 py-2 text-xs hover:bg-gray-50 text-red-600">
                       <Trash2Icon class="mr-2 h-3 w-3" /> Delete
                     </button>
                   </div>
@@ -326,13 +324,18 @@ const toggleActionMenu = (permitId: number) => {
       </div>
     </div>
 
-    <div v-if="isDeleteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div v-if="isDeleteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-2xl">
-        <h3 class="text-lg font-bold text-gray-900">Confirm Deletion</h3>
-        <p class="text-sm text-gray-500 mt-2">Are you sure? This action will permanently remove this permit record from the system.</p>
+        <div class="flex items-center gap-3 text-red-600 mb-2">
+          <AlertCircleIcon class="h-6 w-6" />
+          <h3 class="text-lg font-bold">Confirm Deletion</h3>
+        </div>
+        <p class="text-sm text-gray-500">
+          Are you sure you want to delete the permit for <strong>{{ pendingPermitAction?.name_of_establishment }}</strong>? This action cannot be undone.
+        </p>
         <div class="flex justify-end gap-3 mt-6">
-          <button @click="isDeleteModalOpen = false" class="px-4 py-2 text-sm border rounded-md">Cancel</button>
-          <button @click="deleteCard" class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">Delete Permanently</button>
+          <button @click="isDeleteModalOpen = false" class="px-4 py-2 text-sm border rounded-md hover:bg-gray-50">Cancel</button>
+          <button @click="executeDelete" class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 font-medium">Delete Permanently</button>
         </div>
       </div>
     </div>
