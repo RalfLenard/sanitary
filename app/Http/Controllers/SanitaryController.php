@@ -44,77 +44,62 @@ class SanitaryController extends Controller
     public function sanitary(Request $request): Response
     {
         $searchTerm = $request->query('search');
-
-        // Fetch Sanitary Permits with Search and Filters + Pagination
+        // Default to current year if no year is selected
+        $selectedYear = $request->query('renewal_year', now()->year);
+        $selectedQuarter = $request->query('quarter');
+    
+        // 1. Fetch Paginated Permits
         $sanitaryPermits = Sanitary::query()
             ->when($searchTerm, function ($query, $searchTerm) {
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('name_of_establishment', 'like', "%{$searchTerm}%")
-                        ->orWhere('name_of_owner', 'like', "%{$searchTerm}%")
-                        ->orWhere('contact_number', 'like', "%{$searchTerm}%")
-                        ->orWhere('barangay', 'like', "%{$searchTerm}%")
-                        ->orWhere('line_of_business', 'like', "%{$searchTerm}%")
-                        ->orWhere('inspector_name', 'like', "%{$searchTerm}%")
-                        ->orWhere('renewal_year', 'like', "%{$searchTerm}%")
-                        ->orWhere('permit_code', 'like', "%{$searchTerm}%");
+                      ->orWhere('name_of_owner', 'like', "%{$searchTerm}%")
+                      ->orWhere('barangay', 'like', "%{$searchTerm}%")
+                      ->orWhere('permit_code', 'like', "%{$searchTerm}%");
                 });
             })
-            ->when($request->query('name_of_establishment'), fn($q, $name) => $q->where('name_of_establishment', 'like', "%{$name}%"))
-            ->when($request->query('name_of_owner'), fn($q, $owner) => $q->where('name_of_owner', 'like', "%{$owner}%"))
-            ->when($request->query('barangay'), fn($q, $barangay) => $q->where('barangay', 'like', "%{$barangay}%"))
-            ->when($request->query('permit_code'), fn($q, $code) => $q->where('permit_code', 'like', "%{$code}%"))
-            ->when($request->query('renewal_year'), fn($q, $year) => $q->where('renewal_year', $year))
-            ->when($request->query('quarter'), fn($q, $quarter) => $q->where('quarter', $quarter)) // Added Quarter Filtering
+            ->when($request->filled('name_of_establishment'), fn($q) => $q->where('name_of_establishment', 'like', "%{$request->name_of_establishment}%"))
+            ->when($request->filled('name_of_owner'), fn($q) => $q->where('name_of_owner', 'like', "%{$request->name_of_owner}%"))
+            ->when($request->filled('barangay'), fn($q) => $q->where('barangay', 'like', "%{$request->barangay}%"))
+            // Filter by the specific year selected
+            ->where('renewal_year', $selectedYear) 
+            ->when($selectedQuarter, fn($q) => $q->where('quarter', $selectedQuarter))
             ->latest()
-            ->paginate(50) // ✅ Ensure pagination
-            ->appends($request->query()); // ✅ Paginate results (50 per page)
-
-        // Get the current year and selected quarter
-        $currentYear = now()->year;
-        $selectedQuarter = $request->query('quarter');
-
-        // Define quarters (1-4) to ensure all quarters are included
+            ->paginate(50)
+            ->withQueryString();
+    
+        // 2. Fetch Quarterly Stats for the Selected Year
         $quarters = [1, 2, 3, 4];
-
-        // Fetch quarterly data using the `quarter` column
-        $query = Sanitary::selectRaw("
-        CASE 
-            WHEN renewed_at IS NULL THEN 'new' 
-            ELSE 'renewed' 
-        END as permit_type,
-        QUARTER(COALESCE(renewed_at, created_at)) as quarter,
-        COUNT(*) as total_count
-    ")
-            ->whereYear('renewed_at', $currentYear) // Filter by current year
-            ->groupByRaw("permit_type, QUARTER(COALESCE(renewed_at, created_at))")
-            ->orderByRaw("QUARTER(COALESCE(renewed_at, created_at))");
-
-        // Apply quarter filter if selected
-        if ($selectedQuarter) {
-            $query->whereRaw("QUARTER(COALESCE(renewed_at, created_at)) = ?", [$selectedQuarter]);
-        }
-
-        $rawData = $query->get();
-
-        // Ensure all quarters are included in the result
+        $rawData = Sanitary::selectRaw("
+                CASE 
+                    WHEN renewed_at IS NULL THEN 'new' 
+                    ELSE 'renewed' 
+                END as permit_type,
+                quarter,
+                COUNT(*) as total_count
+            ")
+            ->where('renewal_year', $selectedYear) // Key change: Match statistics to the selected year
+            ->groupBy('permit_type', 'quarter')
+            ->get();
+    
         $quarterlyData = collect($quarters)->map(function ($q) use ($rawData) {
-            $data = $rawData->firstWhere('quarter', $q);
-
+            $new = $rawData->where('quarter', $q)->where('permit_type', 'new')->first();
+            $renewed = $rawData->where('quarter', $q)->where('permit_type', 'renewed')->first();
+    
             return [
                 'quarter' => $q,
-                'new_businesses' => $data && $data->permit_type == 'new' ? $data->total_count : 0,
-                'renewals' => $data && $data->permit_type == 'renewed' ? $data->total_count : 0,
+                'new_businesses' => $new ? $new->total_count : 0,
+                'renewals' => $renewed ? $renewed->total_count : 0,
             ];
         });
-
+    
         return Inertia::render('Sanitary', [
-            'sanitaryPermits' => $sanitaryPermits, // ✅ Paginated data
-            'quarterlyData' => $quarterlyData
+            'sanitaryPermits' => $sanitaryPermits,
+            'quarterlyData' => $quarterlyData,
+            'filters' => $request->all(['search', 'renewal_year', 'quarter']) // Pass filters back to Vue
         ]);
     }
-
-
-
+    
     public function updatePermit(Request $request, $id)
     {
         // Validate the request data
