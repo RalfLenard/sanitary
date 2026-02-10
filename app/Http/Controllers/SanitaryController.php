@@ -150,28 +150,30 @@ class SanitaryController extends Controller
     public function renewalPermit(Request $request, $id)
     {
         $sanitary = Sanitary::findOrFail($id);
-
-        $now = Carbon::now(); // or Carbon::now('Asia/Manila') if you want to ensure timezone
+    
+        $now = Carbon::now();
         $currentYear = $now->year;
-        $currentQuarter = ceil($now->month / 3); // Q1 to Q4
-
-        // Debug: check current quarter & year
-        // dd($now->month, $currentQuarter, $currentYear);
-
-        // Prevent duplicate renewal for same quarter
+        $currentQuarter = ceil($now->month / 3);
+    
+        // Prevent duplicate renewal for same quarter/year
         if ($sanitary->renewal_year == $currentYear && $sanitary->quarter == $currentQuarter) {
             return back()->with('warning', "This permit has already been renewed for Q{$currentQuarter}.");
         }
-
-        // ✅ Make sure these fields are fillable in the model or use individual assignments
+    
+        // Update fields
         $sanitary->renewal_year = $currentYear;
-        $sanitary->quarter = $currentQuarter;
-        $sanitary->renewed_at = now();
-        $sanitary->status = 'renewed'; // Match your ENUM exactly (case-sensitive)
-        $sanitary->confirmed = false;
+        $sanitary->quarter      = $currentQuarter;
+        $sanitary->renewed_at   = now();
+        $sanitary->status       = 'renewed';
+        $sanitary->confirmed    = false;
+    
+        // ✅ Clear the sanitary/permit code upon renewal
+        // This ensures they must be issued a new code after re-inspection
+        $sanitary->sanitary_code = null; 
+        
         $sanitary->save();
-
-        return back()->with('success', "Permit successfully renewed for Q{$currentQuarter}!");
+    
+        return back()->with('success', "Permit successfully renewed for Q{$currentQuarter}. The old permit code has been cleared.");
     }
 
     public function deleteSanitary($id)
