@@ -51,8 +51,8 @@
 
         #scode {
             position: absolute;
-            top: 70px;
-            left: 230px;
+            top: 68px;
+            left: 245px;
         }
 
         .left {
@@ -70,7 +70,7 @@
 
         #name {
             position: absolute;
-            top: 74px;
+            top: 58px;
             left: 10px;
             width: 280px;
             /* border: solid red 1px; */
@@ -79,7 +79,7 @@
 
         #pos {
             position: absolute;
-            top: 97px;
+            top: 81px;
             left: 44px;
             /* height: 25px; */
             text-align: center;
@@ -91,8 +91,8 @@
 
         #age {
             position: absolute;
-            top: 120px;
-            left: -8px;
+            top: 105px;
+            left: 8px;
             width: 40px;
             /* border: solid red 1px; */
             text-align: center;
@@ -105,8 +105,8 @@
 
         #gender {
             position: absolute;
-            top: 120px;
-            left: 65px;
+            top: 105px;
+            left: 71px;
             width: 70px;
             /* border: solid red 1px; */
             text-align: center;
@@ -117,7 +117,7 @@
         
         .fil {
             position: absolute;
-            top: 120px;
+            top: 105px;
             left: 195px;
            
             width: 105px;
@@ -149,8 +149,16 @@
 
         #doc {
             position: relative;
-            top: -5px;
-            left: 3px;
+            top: -30px;
+            left: 7px;
+            font-size: 10px;
+        }
+
+        #ins{
+            position: relative;
+            top: -25px;
+            left: 7px;
+            font-size: 10px;
         }
 
         #ins, #doc {
@@ -160,6 +168,8 @@
             align-items: center;
         }
 
+
+
         .right {
             width: 50%;
             display: flex;
@@ -167,13 +177,19 @@
         }
 
         #date {
-            gap: 55px;
+            gap: 48px;
             display: flex;
             flex-direction: row;
             justify-content: center;
             align-items: center;
-            margin-top: 125px;
+            margin-top: 120px;
+            margin-right: 18px;
         }
+
+        /* .date1{
+            position: absolute;
+            top: 20px;
+        } */
 
         .Meds{
             position: relative;
@@ -181,7 +197,8 @@
             gap: 160px;
             width: 100%;
             justify-content: center;
-            top: 267px;
+            top: 241px;
+            left: -16px;
         }
 
         .dos{
@@ -191,7 +208,7 @@
         .med_result, .do {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
         }
 
         #med1 {
@@ -200,15 +217,16 @@
             gap: 160px;
             width: 100%;
             position: relative;
-            top: 183px;
+            top: 166px;
+            left: -16px;
         }
 
         .sir-a {
-            width: 110px;
-            height: 110px;
+            width: 90px;
+            height: 90px;
             position: absolute; /* Position the image absolutely */
-            top: -45px; /* Adjust as needed */
-        left: 120px; /* Adjust as needed */
+            top: -50px; /* Adjust as needed */
+        left: 135px; /* Adjust as needed */
         z-index: 1; /* Puts image behind the text */
       
     }
@@ -257,8 +275,8 @@
         width: 150px;
         height: 150px;
         position: absolute; /* Position the image absolutely */
-        top: -15px; /* Adjust as needed */
-        left: 130px; /* Adjust as needed */
+        top: -35px; /* Adjust as needed */
+        left: 135px; /* Adjust as needed */
         z-index: 1; /* Puts image behind the text */
         /* filter: contrast(300%);
         filter: drop-shadow(1px 1px 0px black)  */
@@ -273,7 +291,7 @@
     height: 210px;
     position: absolute; /* Position the image absolutely */
     top: 5px; /* Adjust as needed */
-    left: 30px; /* Adjust as needed */
+    left: 50px; /* Adjust as needed */
     z-index: -1; /* Puts image behind the text */
     transform: rotate(180deg); /* Rotates the image */
 }
@@ -282,8 +300,8 @@
     width: 330px;
     height: 210px;
     position: absolute; /* Position the image absolutely */
-    top: 290px; /* Adjust as needed */
-    right: -350px; /* Adjust as needed */
+    top: 255px; /* Adjust as needed */
+    right: -328px; /* Adjust as needed */
     z-index: -1; /* Puts image behind the text */
     transform: rotate(360deg); /* Rotates the image */
 }
@@ -320,7 +338,7 @@
                     <p id="workplace" 
                         style="font-size: {{ strlen(str_replace(' ', '', $health->place_of_employment)) >= 20 ? '9px' : '13px' }};
                                 position: absolute;
-                                top: {{ strlen(str_replace(' ', '', $health->place_of_employment)) >= 20 ? '150px' : '143px' }};">
+                                top: {{ strlen(str_replace(' ', '', $health->place_of_employment)) >= 20 ? '130px' : '125px' }};">
                             {{ $health->place_of_employment }}
                         </p>
 
@@ -353,7 +371,7 @@
           
                 <div id="date">
              
-                    <p>{{ \Carbon\Carbon::parse($health->date_of_issuance)->format('F d, Y') }}</p>
+                    <p class="date1">{{ \Carbon\Carbon::parse($health->date_of_issuance)->format('F d, Y') }}</p>
                     <p>{{ \Carbon\Carbon::parse($health->date_of_expiration)->format('F d, Y') }}</p>
                 </div>
                 <div id="med1">
