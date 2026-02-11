@@ -91,7 +91,7 @@
 
         #age {
             position: absolute;
-            top: 105px;
+            top: 104px;
             left: 8px;
             width: 40px;
             /* border: solid red 1px; */
@@ -105,7 +105,7 @@
 
         #gender {
             position: absolute;
-            top: 105px;
+            top: 104px;
             left: 71px;
             width: 70px;
             /* border: solid red 1px; */
@@ -117,7 +117,7 @@
         
         .fil {
             position: absolute;
-            top: 105px;
+            top: 104px;
             left: 195px;
            
             width: 105px;
@@ -183,7 +183,7 @@
             justify-content: center;
             align-items: center;
             margin-top: 120px;
-            margin-right: 18px;
+            margin-right: 19px;
         }
 
         /* .date1{
@@ -300,7 +300,7 @@
     width: 330px;
     height: 210px;
     position: absolute; /* Position the image absolutely */
-    top: 255px; /* Adjust as needed */
+    top: 264px; /* Adjust as needed */
     right: -328px; /* Adjust as needed */
     z-index: -1; /* Puts image behind the text */
     transform: rotate(360deg); /* Rotates the image */
