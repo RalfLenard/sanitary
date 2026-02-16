@@ -2,6 +2,7 @@
 
     <Head title="Health Card" />
     <AppLayout :breadcrumbs="breadcrumbs">
+        <FlashMessage />
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl ">
             <div class="w-full bg-white rounded-lg shadow-md">
                 <div class="flex flex-col p-6 border-b gap-4">
@@ -320,6 +321,7 @@ import AddUpdateHealthCardModal from "@/components/AddUpdateHealthCardModal.vue"
 import PaginationHealthCard from "@/components/PaginationHealtCard.vue";
 import { route } from 'ziggy-js';
 import FlashToast from '@/components/FlashToast.vue'; 
+import FlashMessage from '@/components/FlashMessage.vue';
 
 // Breadcrumbs
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Health Card', href: '/health-card' }];

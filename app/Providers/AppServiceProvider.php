@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,10 +19,17 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot()
     {
-       
-            // URL::forceScheme('https'); // TANGALIN LANG ANG DALAWANG FORWARD SLASH SA TABI NG URL
-        
+        Inertia::share([
+            'flash' => function () {
+                return [
+                    'success' => session('success'),
+                    'error' => session('error'),
+                    'warning' => session('warning'),
+                    'info' => session('info'),
+                ];
+            },
+        ]);
     }
 }

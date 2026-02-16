@@ -2,6 +2,7 @@
   <Head title="Death Certificate" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
+    <FlashMessage />
     <div class="flex min-h-screen w-full flex-col bg-gray-50">
       <!-- Main Content -->
       <main class="flex flex-1 flex-col gap-4 p-2 md:gap-8 md:p-8">
@@ -430,6 +431,7 @@ import { useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import AddDeathModal from "@/components/AddDeathModal.vue";
+import FlashMessage from '@/components/FlashMessage.vue';
 
 // Breadcrumbs
 const breadcrumbs: BreadcrumbItem[] = [

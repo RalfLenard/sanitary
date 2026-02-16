@@ -168,7 +168,7 @@ class HealthCardController extends Controller
             'rhu' => strtoupper($request->rhu ?? ''),
         ]);
 
-        return redirect()->back()->with('success', 'Health card added successfully');
+        return redirect()->route('healthCard')->with('success', 'Health card added successfully');
     }
 
 
@@ -186,35 +186,37 @@ class HealthCardController extends Controller
             'inspector_name' => 'nullable|max:255',
             'rhu' => 'nullable|max:255',
         ]);
-
-        $issuanceDate = Carbon::parse($request->date_of_issuance);
-        $expirationDate = null;
-
-        // Determine expiration date based on health card type
-        if ($request->health_card_type === 'non_food') {
-            $expirationDate = $issuanceDate->copy()->addMonths(12); // 12 months from issuance
-        } elseif ($request->health_card_type === 'food') {
-            $expirationDate = $issuanceDate->copy()->addMonths(6); // 6 months from issuance
-        } elseif ($request->health_card_type === 'others') {
-            $issueDate = Carbon::parse($request->date_of_issuance);
-        
-            if ($issueDate->month >= 11) {
-                // If issue date is in November or December → next year
-                $expirationDate = $issueDate->copy()->addYear()->endOfYear();
-            } else {
-                // Otherwise → current year
-                $expirationDate = $issueDate->copy()->endOfYear();
-            }
-        }
-
+    
         try {
-            // Find health card or throw ModelNotFoundException if not found
+    
+            $issuanceDate = Carbon::parse($request->date_of_issuance);
+            $expirationDate = null;
+    
+            // Determine expiration date based on health card type
+            if ($request->health_card_type === 'non_food') {
+                $expirationDate = $issuanceDate->copy()->addMonths(12);
+            } 
+            elseif ($request->health_card_type === 'food') {
+                $expirationDate = $issuanceDate->copy()->addMonths(6);
+            } 
+            elseif ($request->health_card_type === 'others') {
+    
+                if ($issuanceDate->month >= 11) {
+                    // November or December → next year end
+                    $expirationDate = $issuanceDate->copy()->addYear()->endOfYear();
+                } else {
+                    // Otherwise → end of current year
+                    $expirationDate = $issuanceDate->copy()->endOfYear();
+                }
+            }
+    
+            // Find record
             $health = HealthCard::findOrFail($id);
-
-            // Update the health card
+    
+            // Update record
             $health->update([
                 'full_name' => strtoupper($request->full_name),
-                'health_card_type' => ($request->health_card_type),
+                'health_card_type' => $request->health_card_type,
                 'age' => $request->age,
                 'gender' => $request->gender,
                 'place_of_employment' => strtoupper($request->place_of_employment ?? ''),
@@ -225,21 +227,25 @@ class HealthCardController extends Controller
                 'inspector_name' => strtoupper($request->inspector_name ?? ''),
                 'rhu' => strtoupper($request->rhu ?? ''),
             ]);
-
-            session()->flash('success', 'Health Card updated successfully');
-            return redirect()->back();
-
+    
+            return redirect()
+                ->route('healthCard')
+                ->with('success', 'Health Card updated successfully.');
+    
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+    
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['error' => 'Health card not found. Please try again.']);
+                ->with('error', 'Health card not found. Please try again.');
+    
         } catch (\Exception $e) {
+    
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['error' => 'Failed to update health card. Please try again.']);
+                ->with('error', 'Failed to update health card. Please try again.');
         }
     }
-
+    
 
     public function generatePdf(Request $request)
     {

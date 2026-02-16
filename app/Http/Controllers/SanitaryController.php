@@ -157,7 +157,7 @@ class SanitaryController extends Controller
     
         // Prevent duplicate renewal for same quarter/year
         if ($sanitary->renewal_year == $currentYear && $sanitary->quarter == $currentQuarter) {
-            return back()->with('warning', "This permit has already been renewed for Q{$currentQuarter}.");
+            return redirect()->route('sanitary')->with('error', "This permit has already been renewed for Q{$currentQuarter}.");
         }
     
         // Update fields
@@ -173,7 +173,7 @@ class SanitaryController extends Controller
         
         $sanitary->save();
     
-        return back()->with('success', "Permit successfully renewed for Q{$currentQuarter}. The old permit code has been cleared.");
+        return redirect()->route('sanitary')->with('success', "Permit successfully renewed for Q{$currentQuarter}. The old permit code has been cleared.");
     }
 
     public function deleteSanitary($id)
@@ -182,9 +182,9 @@ class SanitaryController extends Controller
             $sanitary = Sanitary::findOrFail($id);
             $sanitary->delete();
 
-            return redirect()->back()->with('success', 'Sanitary Permit deleted successfully.');
+            return redirect()->route('sanitary')->with('success', 'Sanitary Permit deleted successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to delete Sanitary Permit.');
+            return redirect()->route('sanitary')->with('error', 'Failed to delete Sanitary Permit.');
         }
     }
 

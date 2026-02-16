@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
+import FlashMessage from '@/components/FlashMessage.vue';
 import { 
   MoreHorizontalIcon, 
   SearchIcon, 
@@ -156,6 +157,7 @@ const toggleActionMenu = (permitId: number) => {
 <template>
   <Head title="Sanitary" />
   <AppLayout :breadcrumbs="breadcrumbs">
+    <FlashMessage />
     <div class="p-6 space-y-6">
       
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

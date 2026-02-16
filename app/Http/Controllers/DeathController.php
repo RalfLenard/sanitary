@@ -79,7 +79,7 @@ class DeathController extends Controller
         Death::create($validatedData);
 
 
-        return redirect()->back()->with('success', 'Death record created successfully');
+        return redirect()->route('death.index')->with('success', 'Death record created successfully');
     }
 
     public function generatePdf(Request $request, $id)
@@ -156,7 +156,7 @@ class DeathController extends Controller
         $death->update($validatedData);
 
         // Redirect back with a success message
-        return redirect()->back()->with('success', 'Death record updated successfully');
+        return redirect()->route('death.index')->with('success', 'Death record updated successfully');
     }
 
     public function delete($id)
@@ -168,7 +168,7 @@ class DeathController extends Controller
         $death->delete();
 
         // Return a JSON response and redirect back
-        return redirect()->back()->with('success', 'Death record deleted successfully');
+        return redirect()->route('death.index')->with('success', 'Death record deleted successfully');
     }
 
 
