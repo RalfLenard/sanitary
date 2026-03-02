@@ -64,6 +64,7 @@ class SanitaryController extends Controller
             ->when($request->query('name_of_establishment'), fn($q, $name) => $q->where('name_of_establishment', 'like', "%{$name}%"))
             ->when($request->query('name_of_owner'), fn($q, $owner) => $q->where('name_of_owner', 'like', "%{$owner}%"))
             ->when($request->query('barangay'), fn($q, $barangay) => $q->where('barangay', 'like', "%{$barangay}%"))
+            ->when($request->query('line_of_business'), fn($q, $line_of_business) => $q->where('barangay', 'like', "%{$line_of_business}%"))
             ->when($request->query('sanitary_code'), fn($q, $code) => $q->where('sanitary_code', 'like', "%{$code}%"))
             // Apply the Year filter strictly
             ->where('renewal_year', $selectedYear)
@@ -107,7 +108,7 @@ class SanitaryController extends Controller
         return Inertia::render('Sanitary', [
             'sanitaryPermits' => $sanitaryPermits,
             'quarterlyData' => $quarterlyData,
-            'filters' => $request->all(['search', 'renewal_year', 'quarter', 'name_of_establishment', 'name_of_owner', 'barangay', 'sanitary_code'])
+            'filters' => $request->all(['search', 'renewal_year', 'quarter', 'name_of_establishment', 'name_of_owner', 'barangay', 'sanitary_code', 'line_of_business'])
         ]);
     }
     public function updatePermit(Request $request, $id)

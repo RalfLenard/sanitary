@@ -44,6 +44,7 @@ const searchCriteria = ref({
   name_of_establishment: props.filters?.name_of_establishment || '',
   name_of_owner: props.filters?.name_of_owner || '',
   barangay: props.filters?.barangay || '',
+  line_of_business: props.filters?.line_of_business || '',
   sanitary_code: props.filters?.sanitary_code || '',
   renewal_year: props.filters?.renewal_year || new Date().getFullYear(),
   quarter: props.filters?.quarter || null,
@@ -231,6 +232,7 @@ const toggleActionMenu = (permitId: number) => {
                 <th class="p-4">Establishment</th>
                 <th class="p-4">Owner</th>
                 <th class="p-4 hidden lg:table-cell">Barangay</th>
+                <th class="p-4">Line of Business</th>
                 <th class="p-4 text-center">Year/Qtr</th>
                 <th class="p-4">Status</th>
                 <th class="p-4 text-right">Actions</th>
@@ -244,6 +246,7 @@ const toggleActionMenu = (permitId: number) => {
                 </td>
                 <td class="p-4">{{ permit.name_of_owner }}</td>
                 <td class="p-4 hidden lg:table-cell text-gray-500">{{ permit.barangay }}</td>
+                <td class="p-4">{{ permit.line_of_business }}</td>
                 <td class="p-4 text-center font-mono text-xs">
                   {{ permit.renewal_year }} / Q{{ permit.quarter }}
                 </td>
