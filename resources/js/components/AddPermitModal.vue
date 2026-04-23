@@ -23,7 +23,56 @@
           </div>
           <div class="grid gap-2">
             <label class="text-sm font-medium">Barangay</label>
-            <input v-model="form.barangay" class="input-field" />
+            <select v-model="form.barangay" class="input-field">
+              <option disabled value="">Select Barangay</option>
+
+              <option value="Alfonso, Concepcion, Tarlac">Alfonso, Concepcion, Tarlac</option>
+              <option value="Balutu, Concepcion, Tarlac">Balutu, Concepcion, Tarlac</option>
+              <option value="Cafe, Concepcion, Tarlac">Cafe, Concepcion, Tarlac</option>
+              <option value="Calius Gueco, Concepcion, Tarlac">Calius Gueco, Concepcion, Tarlac</option>
+              <option value="Caluluan, Concepcion, Tarlac">Caluluan, Concepcion, Tarlac</option>
+              <option value="Castillo, Concepcion, Tarlac">Castillo, Concepcion, Tarlac</option>
+              <option value="Corazon De Jesus, Concepcion, Tarlac">Corazon De Jesus, Concepcion, Tarlac</option>
+              <option value="Culatingan, Concepcion, Tarlac">Culatingan, Concepcion, Tarlac</option>
+              <option value="Dungan, Concepcion, Tarlac">Dungan, Concepcion, Tarlac</option>
+              <option value="Dutung A Matas, Concepcion, Tarlac">Dutung A Matas, Concepcion, Tarlac</option>
+              <option value="Green Village, Concepcion, Tarlac<">Green Village, Concepcion, Tarlac</option>
+              <option value="Lilibangan, Concepcion, Tarlac">Lilibangan, Concepcion, Tarlac</option>
+              <option value="Mabilog, Concepcion, Tarlac">Mabilog, Concepcion, Tarlac</option>
+              <option value="Magao, Concepcion, Tarlac">Magao, Concepcion, Tarlac</option>
+              <option value="Malupa, Concepcion, Tarlac">Malupa, Concepcion, Tarlac</option>
+              <option value="Minane, Concepcion, Tarlac">Minane, Concepcion, Tarlac</option>
+              <option value="Panalicsican, Concepcion, Tarlac">Panalicsican, Concepcion, Tarlac</option>
+              <option value="Pando, Concepcion, Tarlac">Pando, Concepcion, Tarlac</option>
+              <option value="Parang, Concepcion, Tarlac">Parang, Concepcion, Tarlac</option>
+              <option value="Parulung, Concepcion, Tarlac">Parulung, Concepcion, Tarlac</option>
+              <option value="Pitabunan, Concepcion, Tarlac">Pitabunan, Concepcion, Tarlac</option>
+              <option value="San Agustin, Concepcion, Tarlac">San Agustin, Concepcion, Tarlac</option>
+              <option value="San Antonio, Concepcion, Tarlac">San Antonio, Concepcion, Tarlac</option>
+              <option value="San Bartolome, Concepcion, Tarlac">San Bartolome, Concepcion, Tarlac</option>
+              <option value="San Francisco, Concepcion, Tarlac">San Francisco, Concepcion, Tarlac</option>
+              <option value="San Isidro, Concepcion, Tarlac">San Isidro, Concepcion, Tarlac</option>
+              <option value="San Jose, Concepcion, Tarlac">San Jose, Concepcion, Tarlac</option>
+              <option value="San Juan, Concepcion, Tarlac">San Juan, Concepcion, Tarlac</option>
+              <option value="San Martin, Concepcion, Tarlac">San Martin, Concepcion, Tarlac</option>
+              <option value="San Nicolas Pob., Concepcion, Tarlac">San Nicolas Pob., Concepcion, Tarlac</option>
+              <option value="San Nicolas Balas, Concepcion, Tarlac">San Nicolas Balas, Concepcion, Tarlac</option>
+              <option value="San Vicente, Concepcion, Tarlac">San Vicente, Concepcion, Tarlac</option>
+              <option value="Sta. Cruz, Concepcion, Tarlac">Sta. Cruz, Concepcion, Tarlac</option>
+              <option value="Sta. Maria, Concepcion, Tarlac">Sta. Maria, Concepcion, Tarlac</option>
+              <option value="Sta. Monica, Concepcion, Tarlac">Sta. Monica, Concepcion, Tarlac</option>
+              <option value="Sta. Rita, Concepcion, Tarlac">Sta. Rita, Concepcion, Tarlac</option>
+              <option value="Sta Rosa, Concepcion, Tarlac">Sta Rosa, Concepcion, Tarlac</option>
+              <option value="Santiago, Concepcion, Tarlac">Santiago, Concepcion, Tarlac</option>
+              <option value="Sto. Cristo, Concepcion, Tarlac">Sto. Cristo, Concepcion, Tarlac</option>
+              <option value="Sto. Niño, Concepcion, Tarlac">Sto. Niño, Concepcion, Tarlac</option>
+              <option value="Sto. Rosario, Concepcion, Tarlac">Sto. Rosario, Concepcion, Tarlac</option>
+              <option value="Talimunduc Marimla, Concepcion, Tarlac">Talimunduc Marimla, Concepcion, Tarlac</option>
+              <option value="Talimunduc San Miguel, Concepcion, Tarlac">Talimunduc San Miguel, Concepcion, Tarlac</option>
+              <option value="Telabanca, Concepcion, Tarlac">Telabanca, Concepcion, Tarlac</option>
+              <option value="Tinang, Concepcion, Tarlac">Tinang, Concepcion, Tarlac</option>
+
+            </select>
           </div>
           <div class="grid gap-2">
             <label class="text-sm font-medium">Contact Number</label>
@@ -35,8 +84,18 @@
           </div>
           <div class="grid gap-2">
             <label class="text-sm font-medium">Inspector</label>
-            <input v-model="form.inspector_name" class="input-field" />
+            <select v-model="form.inspector_name"
+              class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500 sm:text-sm transition-colors duration-200">
+                <option value="" disabled>Select a Name</option>
+                <option value="AARON JAY C. GONZALES">AARON JAY C. GONZALES</option>
+                <option value="GREGORIO B. ARCEO">GREGORIO B. ARCEO</option>
+                <option value="GERALD B. CASTRO">GERALD B. CASTRO</option>
+                
+                <option value="MICHAEL CHRISTIAN D. MUÑOZ">MICHAEL CHRISTIAN D. MUÑOZ</option>
+  
+            </select>
           </div>
+         
           <div class="grid gap-2">
             <label class="text-sm font-medium">Renewal Year</label>
             <input v-model="form.renewal_year" type="number" class="input-field" />
@@ -124,5 +183,9 @@ const submit = () => {
 }
 .exit-btn {
   @apply text-2xl text-gray-500 hover:text-gray-700 cursor-pointer;
+}
+
+*{
+  text-transform: uppercase;
 }
 </style>

@@ -572,24 +572,24 @@ const formPermit = ref({
   quarter: "",
   start_date: "",
   end_date: "",
+  sanitary_option: "all", // ✅ NEW (all | with | without)
 });
 
 const generateQuarterPermitPDF = () => {
-  const { quarter, start_date, end_date } = formPermit.value; // ✅ FIXED
+  const { quarter, start_date, end_date, sanitary_option } = formPermit.value;
 
   if (!quarter || !start_date || !end_date) {
     alert("Please fill in all fields");
     return;
   }
 
-  // Open PDF in new tab
   const url = `/reports/permit?quarter=${encodeURIComponent(
     quarter
-  )}&start_date=${start_date}&end_date=${end_date}`;
+  )}&start_date=${start_date}&end_date=${end_date}&sanitary_option=${sanitary_option}`;
+
   window.open(url, "_blank");
 
-  // Close modal
-  showModalPErmit.value = false; // ✅ FIXED (was showModal)
+  showModalPErmit.value = false;
 };
 
 
@@ -869,6 +869,18 @@ const generateQuarterPermitPDF = () => {
             <option value="2">2nd Quarter</option>
             <option value="3">3rd Quarter</option>
             <option value="4">4th Quarter</option>
+          </select>
+        </div>
+
+        <!-- Sanitary Code Option -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Sanitary Code Filter
+          </label>
+          <select v-model="formPermit.sanitary_option" class="w-full border rounded px-3 py-2">
+            <option value="all">All Records</option>
+            <option value="with">With Sanitary Code</option>
+            <option value="without">Without Sanitary Code</option>
           </select>
         </div>
 

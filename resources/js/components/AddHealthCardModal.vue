@@ -141,3 +141,11 @@ const closeModal = () => {
   emit("close");
 };
 </script>
+
+
+<style scoped>
+*{
+  text-transform: uppercase;
+}
+
+</style>

@@ -157,46 +157,59 @@ class PrintController extends Controller
 
     // sanitary per quarter print
     public function reportPermit(Request $request)
-    {
-        // Validate input
-        $validated = $request->validate([
-            'quarter' => 'required|integer',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
-    
-        $quarter = $validated['quarter'];
-        $startDate = $validated['start_date'];
-        $endDate = $validated['end_date'];
-    
-        // Get filtered data from Sanitary model
-        $records = Sanitary::where('quarter', $quarter)
-            ->whereBetween('renewed_at', [$startDate, $endDate]) // use the right column
-            ->orderBy('renewed_at', 'asc')
-            ->get();
-    
-        // Render Blade view
-        $html = View::make('PermitPrint', [
-            'records' => $records,
-            'quarter' => $quarter,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-        ])->render();
-    
-        // Path for PDF
-        $pdfPath = storage_path("app/public/report_permit.pdf");
-    
-        // Generate PDF with Browsershot
-        Browsershot::html($html)
-            ->format('A4')
-            ->landscape()
-            ->showBackground()
-            ->save($pdfPath);
-    
-        // Open PDF in browser instead of download
-        return response()->file($pdfPath, [
-            'Content-Type' => 'application/pdf',
-        ]);
+{
+    // Validate input
+    $validated = $request->validate([
+        'quarter' => 'required|integer',
+        'start_date' => 'required|date',
+        'end_date' => 'required|date|after_or_equal:start_date',
+        'sanitary_option' => 'nullable|in:all,with,without', // ✅ NEW
+    ]);
+
+    $quarter = $validated['quarter'];
+    $startDate = $validated['start_date'];
+    $endDate = $validated['end_date'];
+    $option = $validated['sanitary_option'] ?? 'all';
+
+    // Base query
+    $query = Sanitary::where('quarter', $quarter)
+        ->whereBetween('renewed_at', [$startDate, $endDate]);
+
+    // ✅ Apply sanitary_code condition
+    if ($option === 'with') {
+        $query->whereNotNull('sanitary_code')
+              ->where('sanitary_code', '!=', '');
+    } elseif ($option === 'without') {
+        $query->where(function ($q) {
+            $q->whereNull('sanitary_code')
+              ->orWhere('sanitary_code', '');
+        });
     }
+    // if 'all' → no filter
+
+    $records = $query->orderBy('renewed_at', 'asc')->get();
+
+    // Render Blade
+    $html = View::make('PermitPrint', [
+        'records' => $records,
+        'quarter' => $quarter,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'option' => $option,
+    ])->render();
+
+    // Save PDF
+    $pdfPath = storage_path("app/public/report_permit.pdf");
+
+    Browsershot::html($html)
+        ->format('A4')
+        ->landscape()
+        ->showBackground()
+        ->save($pdfPath);
+
+    return response()->file($pdfPath, [
+        'Content-Type' => 'application/pdf',
+    ]);
+}
     
 }

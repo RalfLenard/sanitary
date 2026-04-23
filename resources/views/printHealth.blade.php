@@ -232,11 +232,11 @@
     }
 
     .sir-g {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             position: absolute; /* Position the image absolutely */
-            top: -60px; /* Adjust as needed */
-        left: 130px; /* Adjust as needed */
+            top: -72px; /* Adjust as needed */
+        left: 145px; /* Adjust as needed */
         z-index: 1; /* Puts image behind the text */
       
     }
@@ -275,7 +275,7 @@
         width: 150px;
         height: 150px;
         position: absolute; /* Position the image absolutely */
-        top: -35px; /* Adjust as needed */
+        top: -50px; /* Adjust as needed */
         left: 135px; /* Adjust as needed */
         z-index: 1; /* Puts image behind the text */
         /* filter: contrast(300%);

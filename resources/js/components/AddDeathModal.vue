@@ -591,7 +591,7 @@
                                             <option value="" disabled>Select a Name</option>
                                             <option value="AARON JAY C. GONZALES">AARON JAY C. GONZALES</option>
                                             <option value="GERALD B. CASTRO">GERALD B. CASTRO</option>
-                                            <option value="HEIDY D. PADERE">HEIDY D. PADERE</option>
+                                            <option value="HEIDY P. ANUSENCION">HEIDY P. ANUSENCION</option>
                                             <option value="MICHAEL CHRISTIAN D. MUÑOZ">MICHAEL CHRISTIAN D. MUÑOZ</option>
                                             <option value="OTHERS">OTHERS</option>
                                         </select>
@@ -1216,3 +1216,9 @@ const closeModal = () => {
 };
 </script> -->
 
+<style scoped>
+*{
+  text-transform: uppercase;
+}
+
+</style>

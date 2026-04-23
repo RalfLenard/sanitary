@@ -10,35 +10,41 @@ use Carbon\Carbon;
 
 class SanitaryController extends Controller
 {
-    public function newPermit(Request $request)
-    {
-        $validated = $request->validate([
-            'name_of_establishment' => 'required|max:255',
-            'name_of_owner' => 'required|max:255',
-            'contact_number' => 'nullable|max:15',
-            'barangay' => 'required|max:255',
-            'line_of_business' => 'required|max:255',
-            'inspector_name' => 'required|string|max:255',
-            'renewal_year' => 'required|digits:4',
-            'has_signature' => 'nullable|boolean',  // ✅ Ensure boolean validation
-        ]);
+   public function newPermit(Request $request)
+{
+    $validated = $request->validate([
+        'name_of_establishment' => 'required|max:255',
+        'name_of_owner' => 'required|max:255',
+        'contact_number' => 'nullable|max:15',
+        'barangay' => 'required|max:255',
+        'line_of_business' => 'required|max:255',
+        'inspector_name' => 'required|string|max:255',
+        'renewal_year' => 'required|digits:4',
+        'has_signature' => 'nullable|boolean',
+    ]);
 
-        // ✅ Debugging: Log the request value
-        \Log::info('Raw has_signature from Vue:', ['has_signature' => $request->has_signature]);
+    // If contact number is empty, set it to N/A
+    $validated['contact_number'] = $request->filled('contact_number') 
+        ? $request->contact_number 
+        : 'N/A';
 
-        // ✅ Convert to boolean properly
-        $validated['has_signature'] = $request->boolean('has_signature');
+    // Debugging logs
+    \Log::info('Raw has_signature from Vue:', ['has_signature' => $request->has_signature]);
 
-        \Log::info('Processed has_signature:', ['has_signature' => $validated['has_signature']]);
+    // Convert to boolean properly
+    $validated['has_signature'] = $request->boolean('has_signature');
 
-        // Auto-assign the quarter based on the current month
-        $validated['quarter'] = ceil(Carbon::now()->month / 3);
+    \Log::info('Processed has_signature:', ['has_signature' => $validated['has_signature']]);
 
-        // Create the sanitary permit
-        Sanitary::create($validated);
+    // Auto-assign quarter
+    $validated['quarter'] = ceil(\Carbon\Carbon::now()->month / 3);
 
-        return redirect()->route('sanitary')->with('success', "Permit successfully created for Q{$validated['quarter']}!");
-    }
+    // Create permit
+    Sanitary::create($validated);
+
+    return redirect()->route('sanitary')
+        ->with('success', "Permit successfully created for Q{$validated['quarter']}!");
+}
 
 
     public function sanitary(Request $request): Response
